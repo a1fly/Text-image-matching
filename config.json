@@ -1,0 +1,11 @@
+{
+    "imageTool_config": {
+        "mainRoot": "../resource/images",
+        "image_extensions": [".jpg", ".jpeg", ".png", ".bmp"]
+    },
+    "clip_config": {
+        "modelname": "ViT-B-16",
+        "modelpath": "../model/clip_model",
+        "batch_size": 32
+    }
+}
