@@ -4,7 +4,10 @@ from PIL import Image
 from datetime import datetime
 import os
 from typing import List
-import hashlib
+import json
+
+
+
 
 """
 主要用于图片的处理
@@ -12,17 +15,33 @@ import hashlib
 功能包括：
 
 1. 读取directory目录下的所有图片  get_all_pic_paths
-2. 存储图片到指定路径下并且返回路径列表  save_images_to_directory
+2. 存储图片并且返回路径列表，以时间形式存储  save_images_to_directory
 
 """
+
+
+
+
 class ImageProcessor():
     def __init__(self):
-        pass
+        with open('../config.json') as f:
+            config = json.load(f)
+
+        self.image_extensions = config['imageTool_config']['image_extensions']
+        self.mainRoot = config['imageTool_config']['mainRoot']
+
+
 
     # 获取到某文件夹下的所有文件的路径
-    def get_all_pic_paths(self,directory: str)->List[str]:
-        # 可用的后缀名
-        image_extensions = {'.jpg', '.jpeg', '.png', '.bmp'}
+    def get_all_pic_paths(self,directory: str,
+                          image_extensions=None)->List[str]:
+        if image_extensions==None:
+            print("使用默认后缀名")
+            image_extensions=self.image_extensions
+
+
+        if image_extensions is None:
+            image_extensions = {'.jpg', '.jpeg', '.png', '.bmp'}
         pic_paths = [
             str(file) for file in Path(directory).rglob('*')
             if file.is_file() and file.suffix.lower() in image_extensions
@@ -32,7 +51,7 @@ class ImageProcessor():
 
     def save_images_to_directory(self,
                                  image_files: List[Image.Image],
-                                 mainRoot: str = "./") -> List[str]:
+                                 mainRoot: str = None) -> List[str]:
         """
         将图片文件保存到特定的时间目录并返回路径列表。
 
@@ -43,7 +62,12 @@ class ImageProcessor():
         返回:
         List[str]: 存储后的图片路径列表。
         """
-        # 获取当前时间并格式化为年、月、日
+
+        if mainRoot==None:
+            print("使用默认值")
+            mainRoot=self.mainRoot
+
+
         current_time = datetime.now().strftime("%Y-%m-%d").split("-")
         year, month, day = current_time[0], current_time[1], current_time[2]
 
@@ -78,18 +102,19 @@ class ImageProcessor():
 
 
 if __name__=='__main__':
+
     ip=ImageProcessor()
-    # 假设你有一个 Image 对象列表
-    image_files = [Image.open("../game.jpg")]
-    print(type(image_files))
-    print(type(image_files[0]))
-
-
-    # 调用函数保存图片
-    saved_paths = ip.save_images_to_directory(image_files, mainRoot="../resource/images")
-
-    # 打印保存的图片路径
-    print(saved_paths)
+    print(ip.get_all_pic_paths("../"))
+    # # 假设你有一个 Image 对象列表
+    # image_files = [Image.open("../game.jpg")]
+    # print(type(image_files))
+    # print(type(image_files[0]))
+    #
+    # # 调用函数保存图片
+    # saved_paths = ip.save_images_to_directory(image_files, mainRoot="../resource/images")
+    #
+    # # 打印保存的图片路径
+    # print(saved_paths)
 
 
 
