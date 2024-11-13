@@ -3,9 +3,19 @@
         "mainRoot": "../resource/images",
         "image_extensions": [".jpg", ".jpeg", ".png", ".bmp"]
     },
+    "ocr_config": {
+        "ocr_model_path": "../model/ocr_model",
+        "trust_remote_code": true,
+        "low_cpu_mem_usage": true,
+        "use_safetensors": true
+    },
     "clip_config": {
         "modelname": "ViT-B-16",
         "modelpath": "../model/clip_model",
+        "batch_size": 32
+    },
+    "blip_config": {
+        "model_path": "../model/blip_model",
         "batch_size": 32
     }
 }
