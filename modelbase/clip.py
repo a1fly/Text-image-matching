@@ -5,117 +5,183 @@ from cn_clip.clip import load_from_name
 from pathlib import Path
 import matplotlib.pyplot as plt
 from tqdm import tqdm
+from typing import List, Tuple
+from tools.imageTool import ImageProcessor
+import json
 
 
-# 获取到某文件夹下的所有文件的路径
-def get_all_pic_paths(directory):
-    return [str(file) for file in Path(directory).rglob('*') if file.is_file()]
+"""
+使用CLIP模型进行图文匹配得出文字和所有图片的相似度
+
+功能介绍：
+
+1. batch_load_images 为节省时间和内存消耗，采取批量读取图片到内存的方式
+2. calculate_similarity 计算输入的句子与图片的相似程度
+3. show_images 输入图片路径和分数进行展示
+4. Top_n_Pic 返回最相似的前n张图片
 
 
-# 显示多张图片的函数
-def show_images(image_paths, scores):
-    plt.figure(figsize=(15, 5))
-    for i, (image_path, score) in enumerate(zip(image_paths, scores)):
-        image = Image.open(image_path)
-        plt.subplot(1, len(image_paths), i + 1)
-        plt.imshow(image)
-        plt.axis('off')
-    plt.show()
+"""
 
 
-if __name__ == '__main__':
-    device = "cuda" if torch.cuda.is_available() else "cpu"
-    print(f"使用设备: {device}")
 
-    # 模型路径
-    modelpath = "../model/clip_model"
+class CLIP:
+    def __init__(self,config_path='../config.json'):
+        """
+        初始化图像搜索类，加载 CLIP 模型和预处理步骤。
 
-    # 加载模型
-    model, preprocess = load_from_name("ViT-B-16", device=device, download_root=modelpath)
+        参数:
+        model_name (str): 模型名称，默认为 "ViT-B-16"。
+        model_path (str): 模型文件存储路径。
+        device (str): 使用的设备，默认为 None，自动选择 "cuda" 或 "cpu"。
+        """
+        with open(config_path) as f:
+            self.config = json.load(f)
+        self.config =self.config['clip_config']
 
-    single_text = input("输入查找的图片：")
-    texts = [single_text]
-    text = clip.tokenize(texts).to(device)
-    text_features = model.encode_text(text)
-
-    # 图片文件夹的路径
-    picpath = "./test/resource/pic/test"
-    # 获取图片的路径
-    image_paths = get_all_pic_paths(picpath)
-    print(f"找到{len(image_paths)}张图片。\n")
-
-    if len(image_paths)==0:
-        print("当前目录未存储图片！！！")
-        exit(0)
+        self.modelname = self.config['modelname']
+        self.modelpath = self.config['modelpath']
+        self.batch_size= self.config['batch_size']
 
 
-    similarity_scores = []
 
-    batch_size = 32  # 每批次处理的图片数量，可以根据显存或内存大小调整
+        self.device = "cuda" if torch.cuda.is_available() else "cpu"
+        print(f"使用设备: {self.device}")
 
+        # 加载模型和预处理函数
+        self.model, self.preprocess = load_from_name(self.modelname, device=self.device, download_root=self.modelpath)
 
-    # 按批次加载图片
-    def batch_load_images(image_paths, batch_size):
+    def batch_load_images(self, image_paths: List[str]) -> Tuple[List[str], torch.Tensor]:
+        """
+        按批次加载图片，并对每张图片进行预处理。
+
+        参数:
+        image_paths (List[str]): 图片路径列表。
+        batch_size (int): 每个批次的大小。
+
+        返回:
+        Tuple[List[str], torch.Tensor]: 每个批次的图片路径和对应的预处理后的图片张量。
+        """
         batch_images = []
         batch_paths = []
         for i, image_path in enumerate(image_paths):
             # 读取并预处理图片
-            image = preprocess(Image.open(image_path)).unsqueeze(0).to(device)
+            image = self.preprocess(Image.open(image_path)).unsqueeze(0).to(self.device)
             batch_images.append(image)
             batch_paths.append(image_path)
 
             # 如果达到当前批次大小，返回当前批次并清空缓存
-            if len(batch_images) == batch_size or i == len(image_paths) - 1:
+            if len(batch_images) == self.batch_size or i == len(image_paths) - 1:
                 yield batch_paths, torch.cat(batch_images, dim=0)  # 将图片合并成一个batch
                 batch_images = []
                 batch_paths = []
 
+    def calculate_similarity(self, image_paths: List[str], query_text: str, batch_size: int = 32) -> List[Tuple[str, float]]:
+        """
+        计算图片与查询文本之间的相似度。
 
-    # 计算相似度
-    with torch.no_grad():
-        for batch_paths, batch_images in tqdm(batch_load_images(image_paths, batch_size),
-                                              desc="计算相似度", unit="批次",
-                                              total=len(image_paths) // batch_size + 1,
-                                              dynamic_ncols=True, leave=False):
-            # 获取批次中的图像特征
-            batch_image_features = model.encode_image(batch_images)
+        参数:
+        image_paths (List[str]): 图片路径列表。
+        query_text (str): 查询文本，作为与图片进行匹配的文本信息。
+        batch_size (int): 每个批次处理的图片数量。
 
-            # 计算每张图片与文本的相似度
-            for image_path, image_feature in zip(batch_paths, batch_image_features):
-                similarity_score = torch.nn.functional.cosine_similarity(image_feature.unsqueeze(0),
-                                                                         text_features).item()
-                similarity_scores.append((image_path, similarity_score))
+        返回:
+        List[Tuple[str, float]]: 图片路径与相似度的元组列表。
+        """
+        # 将查询文本转化为特征向量
+        text = clip.tokenize([query_text]).to(self.device)
+        text_features = self.model.encode_text(text)
 
-    # 按照相似度进行排序
-    similarity_scores.sort(key=lambda x: x[1], reverse=True)
+        similarity_scores = []
 
-    while True:
-        try:
-            n = int(input(f"输入展示的图片数量 (最大 {len(image_paths)} 张): "))
-            if n <= 0 or n > len(image_paths):
-                print(f"请输入一个合理的数量 (1 到 {len(image_paths)})。")
-            else:
-                break
-        except ValueError:
-            print("请输入一个有效的数字。")
+        with torch.no_grad():
+            for batch_paths, batch_images in tqdm(self.batch_load_images(image_paths),
+                                                  desc="计算相似度", unit="批次",
+                                                  total=len(image_paths) // self.batch_size + 1,
+                                                  dynamic_ncols=True, leave=False):
+                # 获取批次中的图像特征
+                batch_image_features = self.model.encode_image(batch_images)
 
-    # 提取最高的n个图片路径和相似度分数
-    top_n_images = [item[0] for item in similarity_scores[:n]]
-    top_n_scores = [item[1] for item in similarity_scores[:n]]
+                # 计算每张图片与文本的相似度
+                for image_path, image_feature in zip(batch_paths, batch_image_features):
+                    similarity_score = torch.nn.functional.cosine_similarity(image_feature.unsqueeze(0),
+                                                                             text_features).item()
+                    similarity_scores.append((image_path, similarity_score))
 
-    print(f"\n  最相似{n}张图片:")
-    for image_path, score in zip(top_n_images, top_n_scores):
-        print(f"图片{image_path} 相似度： {score:.6f}")
+        # 按照相似度进行排序
+        similarity_scores.sort(key=lambda x: x[1], reverse=True)
+        return similarity_scores
 
-    show_images(top_n_images, top_n_scores)
+    def show_images(self, Top_image_paths: List[str], scores: List[float]):
+        """
+        显示多张图片并展示它们的相似度分数。
+
+        参数:
+        image_paths (List[str]): 图片路径列表。
+        scores (List[float]): 对应的相似度分数。
+        """
+        plt.figure(figsize=(15, 5))
+        for i, (image_path, score) in enumerate(zip(Top_image_paths, scores)):
+            image = Image.open(image_path)
+            plt.subplot(1, len(Top_image_paths), i + 1)
+            plt.imshow(image)
+            plt.axis('off')
+            plt.title(f"相似度: {score:.6f}")
+        plt.show()
+
+    def Top_n_Pic(self,similarity_scores,n):
+        """
+        输出相似度最高的前n张图片的路径和分数
+
+        参数：
+        similarity_scores: List[Tuple[str, float]] 所有的相似度
+
+        返回：
+        top_n_images: List[str] 前n张图片的路径
+        top_n_scores: List[float] 前n张图片的分数
+        """
+        while True:
+            try:
+                if n <= 0 or n > len(image_paths):
+                    print(f"请输入一个合理的数量 (1 到 {len(image_paths)})。")
+                else:
+                    break
+            except ValueError:
+                print("请输入一个有效的数字。")
+
+        # 提取相似度最高的 n 张图片路径和分数
+        top_n_images = [item[0] for item in similarity_scores[:n]]
+        top_n_scores = [item[1] for item in similarity_scores[:n]]
+
+        print(f"\n最相似的 {n} 张图片:")
+        for image_path, score in zip(top_n_images, top_n_scores):
+            print(f"图片 {image_path} 相似度： {score:.6f}")
+        return top_n_images,top_n_scores
 
 
 
+if __name__ == '__main__':
+    searcher = CLIP()
+    ip=ImageProcessor()
 
+    query_text = input("请输入查询的文本：")
 
+    # 图片文件夹的路径
+    picpath = "../"
+    # 获取图片路径
+    image_paths = ip.get_all_pic_paths(picpath)
+    print(f"找到 {len(image_paths)} 张图片。\n")
 
+    if len(image_paths) == 0:
+        print("当前目录未存储图片！！！")
+        exit(0)
 
+    # 计算图片与查询文本之间的相似度
+    similarity_scores = searcher.calculate_similarity(image_paths, query_text)
 
+    n = int(input(f"请输入展示的图片数量 (最大 {len(image_paths)} 张): "))
+    top_n_images, top_n_scores=searcher.Top_n_Pic(similarity_scores,n)
 
-
+    # 展示这些图片
+    searcher.show_images(top_n_images, top_n_scores)
 
