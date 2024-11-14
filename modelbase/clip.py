@@ -8,7 +8,7 @@ from tqdm import tqdm
 from typing import List, Tuple
 from tools.imageTool import ImageProcessor
 import json
-
+import torch.nn.functional as F
 
 """
 使用CLIP模型进行图文匹配得出文字和所有图片的相似度
@@ -76,21 +76,21 @@ class CLIP:
                 batch_images = []
                 batch_paths = []
 
-    def calculate_similarity(self, image_paths: List[str], query_text: str, batch_size: int = 32) -> List[Tuple[str, float]]:
+    def calculate_similarity(self, image_paths: List[str], query_text: str) -> List[Tuple[str, float]]:
         """
         计算图片与查询文本之间的相似度。
 
         参数:
         image_paths (List[str]): 图片路径列表。
         query_text (str): 查询文本，作为与图片进行匹配的文本信息。
-        batch_size (int): 每个批次处理的图片数量。
 
         返回:
         List[Tuple[str, float]]: 图片路径与相似度的元组列表。
         """
-        # 将查询文本转化为特征向量
+        # 将查询文本转化为特征向量并进行归一化
         text = clip.tokenize([query_text]).to(self.device)
         text_features = self.model.encode_text(text)
+        text_features = F.normalize(text_features, p=2, dim=-1)
 
         similarity_scores = []
 
@@ -99,19 +99,21 @@ class CLIP:
                                                   desc="计算相似度", unit="批次",
                                                   total=len(image_paths) // self.batch_size + 1,
                                                   dynamic_ncols=True, leave=False):
-                # 获取批次中的图像特征
+                # 获取批次中的图像特征并进行归一化
                 batch_image_features = self.model.encode_image(batch_images)
+                batch_image_features = F.normalize(batch_image_features, p=2, dim=-1)
 
-                # 计算每张图片与文本的相似度
+                # 计算每张图片与文本的余弦相似度或其他距离
                 for image_path, image_feature in zip(batch_paths, batch_image_features):
-                    similarity_score = torch.nn.functional.cosine_similarity(image_feature.unsqueeze(0),
-                                                                             text_features).item()
+                    # 可以使用欧氏距离或者加权距离
+                    similarity_score = F.cosine_similarity(image_feature.unsqueeze(0), text_features).item()
+
+                    # 欧氏距离作为相似度：使用负数表示距离越小，相似度越高
+                    # similarity_score = -torch.dist(image_feature, text_features, p=2).item()
+
                     similarity_scores.append((image_path, similarity_score))
 
-        # 按照相似度进行排序
-        similarity_scores.sort(key=lambda x: x[1], reverse=True)
         return similarity_scores
-
     def show_images(self, Top_image_paths: List[str], scores: List[float]):
         """
         显示多张图片并展示它们的相似度分数。
@@ -164,10 +166,10 @@ if __name__ == '__main__':
     searcher = CLIP()
     ip=ImageProcessor()
 
-    query_text = input("请输入查询的文本：")
+
 
     # 图片文件夹的路径
-    picpath = "../"
+    picpath = "../resource/test_pic"
     # 获取图片路径
     image_paths = ip.get_all_pic_paths(picpath)
     print(f"找到 {len(image_paths)} 张图片。\n")
@@ -176,12 +178,27 @@ if __name__ == '__main__':
         print("当前目录未存储图片！！！")
         exit(0)
 
-    # 计算图片与查询文本之间的相似度
-    similarity_scores = searcher.calculate_similarity(image_paths, query_text)
+    while(True):
+        query_text = input("请输入查询的文本：")
+        # 计算图片与查询文本之间的相似度
+        similarity_scores = searcher.calculate_similarity(image_paths, query_text)
 
-    n = int(input(f"请输入展示的图片数量 (最大 {len(image_paths)} 张): "))
-    top_n_images, top_n_scores=searcher.Top_n_Pic(similarity_scores,n)
-
+        n = int(input(f"请输入展示的图片数量 (最大 {len(image_paths)} 张): "))
+        print("====================================================================")
+        top_n_images, top_n_scores = searcher.Top_n_Pic(similarity_scores, n)
+        print("====================================================================")
     # 展示这些图片
-    searcher.show_images(top_n_images, top_n_scores)
+    # searcher.show_images(top_n_images, top_n_scores)
+
+
+
+# 1.170898
+# 1.00293
+# 1.12793
+# 1.22998
+# 1.028076
+# 1.068848
+# 1.07666
+# 1.119873
+
 

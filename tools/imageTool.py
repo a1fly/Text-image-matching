@@ -23,8 +23,8 @@ import json
 
 
 class ImageProcessor():
-    def __init__(self):
-        with open('../config.json') as f:
+    def __init__(self,config_path='../config.json'):
+        with open(config_path) as f:
             config = json.load(f)
 
         self.image_extensions = config['imageTool_config']['image_extensions']

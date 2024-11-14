@@ -22,11 +22,8 @@ class BLIP:
         self.processor = BlipProcessor.from_pretrained(self.model_path)
         self.model = BlipForConditionalGeneration.from_pretrained(self.model_path).to(self.device)
 
-    def generate_captions(self,image_folder):
+    def generate_captions(self,image_paths):
         # 获取图片路径
-        ip=ImageProcessor()
-        image_paths=ip.get_all_pic_paths(image_folder)
-
         all_captions = []
         # 批量生成描述
         for i in range(0, len(image_paths), self.batch_size):
@@ -46,7 +43,9 @@ class BLIP:
 if __name__ == "__main__":
     caption_generator = BLIP()
     print(1)
-    captions = caption_generator.generate_captions("../resource/images/text_pic")
+    ip=ImageProcessor()
+    image_paths=ip.get_all_pic_paths("../resource/test_pic")
+    captions = caption_generator.generate_captions(image_paths)
     print("captions = ",captions)
     for img_path, caption in captions:
         print(f"{img_path}: {caption}")
