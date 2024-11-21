@@ -23,12 +23,23 @@ import json
 
 
 class ImageProcessor():
-    def __init__(self,config_path='../config.json'):
+    def __init__(self,
+                 config_path='../config.json',
+                 mainRoot=None,
+                 image_extension=None):
+
         with open(config_path) as f:
             config = json.load(f)
+        if mainRoot is None:
+            self.mainRoot = config['imageTool_config']['mainRoot']
+        else:
+            self.mainRoot = mainRoot
 
-        self.image_extensions = config['imageTool_config']['image_extensions']
-        self.mainRoot = config['imageTool_config']['mainRoot']
+        if image_extension is None:
+            self.image_extensions = config['imageTool_config']['image_extensions']
+        else:
+            self.image_extensions = image_extension
+
 
 
 

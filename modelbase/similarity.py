@@ -1,10 +1,20 @@
 from sentence_transformers import SentenceTransformer
 from sklearn.metrics.pairwise import cosine_similarity
-
+import json
 
 class SimilarTool:
-    def __init__(self, modelpath="./model/similar_model"):
-        self.model = SentenceTransformer(modelpath)
+    def __init__(self,
+                 config_path="./config.json",
+                 model_path=None,):
+        with open(config_path) as f:
+            self.config = json.load(f)
+        self.config =self.config['similar_config']
+        if model_path is None:
+            self.modelpath=self.config['model_path']
+        else:
+            self.modelpath=model_path
+
+        self.model = SentenceTransformer(self.modelpath)
 
     # 获取目标句子与所有句子的相似程度
     def getSimilarity(self, target_sentence, all_sentences):
@@ -32,6 +42,6 @@ if __name__ == '__main__':
         "painting of a woman holding a green umbrella and a boy sitting on a hill"
     ]
 
-    model = SimilarTool("./model/similar_model")
+    model = SimilarTool(config_path="../config.json",model_path="../model/similar_model")
     print(model.getSimilarity(target_sentence, all_sentences))
 

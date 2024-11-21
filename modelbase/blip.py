@@ -6,7 +6,10 @@ import json
 from tools.imageTool import ImageProcessor
 
 class BLIP:
-    def __init__(self, config_path="../config.json"):
+    def __init__(self,
+                 config_path="./config.json",
+                 mdoel_path=None,
+                 batch_size=None):
         # 加载配置文件
         with open(config_path, "r") as f:
             config = json.load(f)
@@ -14,9 +17,15 @@ class BLIP:
 
         self.device = "cuda" if torch.cuda.is_available() else "cpu"
 
-        # 从配置文件中获取路径和参数
-        self.model_path = self.config["model_path"]
-        self.batch_size = self.config["batch_size"]
+        if mdoel_path is None:
+            self.model_path = self.config["model_path"]
+        else:
+            self.model_path = mdoel_path
+
+        if batch_size is None:
+            self.batch_size = self.config["batch_size"]
+        else:
+            self.batch_size = batch_size
 
         # 加载模型和处理器
         self.processor = BlipProcessor.from_pretrained(self.model_path)
@@ -41,10 +50,10 @@ class BLIP:
 
 
 if __name__ == "__main__":
-    caption_generator = BLIP()
+    caption_generator = BLIP(config_path="../config.json",mdoel_path="../model/blip_model")
     print(1)
     ip=ImageProcessor()
-    image_paths=ip.get_all_pic_paths("../resource/test_pic")
+    image_paths=ip.get_all_pic_paths("../resource/loss_pic")
     captions = caption_generator.generate_captions(image_paths)
     print("captions = ",captions)
     for img_path, caption in captions:

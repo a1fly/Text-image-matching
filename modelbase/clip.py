@@ -26,7 +26,11 @@ import torch.nn.functional as F
 
 
 class CLIP:
-    def __init__(self,config_path='../config.json'):
+    def __init__(self,
+                 config_path='./config.json',
+                 modelname=None,
+                 modelpath=None,
+                 batch_size=None):
         """
         初始化图像搜索类，加载 CLIP 模型和预处理步骤。
 
@@ -39,10 +43,18 @@ class CLIP:
             self.config = json.load(f)
         self.config =self.config['clip_config']
 
-        self.modelname = self.config['modelname']
-        self.modelpath = self.config['modelpath']
-        self.batch_size= self.config['batch_size']
-
+        if modelname is None:
+            self.modelname = self.config['modelname']
+        else:
+            self.modelname = modelname
+        if modelpath is None:
+            self.modelpath = self.config['model_path']
+        else:
+            self.modelpath = modelpath
+        if batch_size is None:
+            self.batch_size = self.config['batch_size']
+        else:
+            self.batch_size = batch_size
 
 
         self.device = "cuda" if torch.cuda.is_available() else "cpu"
@@ -105,12 +117,7 @@ class CLIP:
 
                 # 计算每张图片与文本的余弦相似度或其他距离
                 for image_path, image_feature in zip(batch_paths, batch_image_features):
-                    # 可以使用欧氏距离或者加权距离
                     similarity_score = F.cosine_similarity(image_feature.unsqueeze(0), text_features).item()
-
-                    # 欧氏距离作为相似度：使用负数表示距离越小，相似度越高
-                    # similarity_score = -torch.dist(image_feature, text_features, p=2).item()
-
                     similarity_scores.append((image_path, similarity_score))
 
         return similarity_scores
@@ -163,13 +170,13 @@ class CLIP:
 
 
 if __name__ == '__main__':
-    searcher = CLIP()
+    searcher = CLIP(config_path="../config.json",modelpath="../model/clip_model")
     ip=ImageProcessor()
 
 
 
     # 图片文件夹的路径
-    picpath = "../resource/test_pic"
+    picpath = "../resource/loss_pic"
     # 获取图片路径
     image_paths = ip.get_all_pic_paths(picpath)
     print(f"找到 {len(image_paths)} 张图片。\n")
@@ -189,16 +196,5 @@ if __name__ == '__main__':
         print("====================================================================")
     # 展示这些图片
     # searcher.show_images(top_n_images, top_n_scores)
-
-
-
-# 1.170898
-# 1.00293
-# 1.12793
-# 1.22998
-# 1.028076
-# 1.068848
-# 1.07666
-# 1.119873
 
 
