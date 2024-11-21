@@ -88,6 +88,8 @@ class CLIP:
                 batch_images = []
                 batch_paths = []
 
+
+
     def calculate_similarity(self, image_paths: List[str], query_text: str) -> List[Tuple[str, float]]:
         """
         计算图片与查询文本之间的相似度。
@@ -121,6 +123,57 @@ class CLIP:
                     similarity_scores.append((image_path, similarity_score))
 
         return similarity_scores
+
+    def Boxes_encode(self, image_path: str,image, boxes: List[List[float]]) -> List[torch.Tensor]:
+        """
+        为图片里面的所有的框框截取的图片编码
+
+        参数:
+        image_path (str): 原始图片的路径
+        boxes (List[List[float]]): 要裁剪的区域，每个区域是一个 (left, top, right, bottom) 的列表
+
+        返回:
+        List[torch.Tensor]: 每个裁剪图片的特征向量
+        """
+        feature_list = []
+
+        img=image
+        # 遍历每个坐标并裁剪
+        for xylist in boxes:
+            left, top, right, bottom = map(int, xylist)
+            box_img = img.crop((left, top, right, bottom))
+            preprocessed_box_img = self.preprocess(box_img).unsqueeze(0).to(self.device)
+            with torch.no_grad():
+                box_feature = self.model.encode_image(preprocessed_box_img)
+            feature_list.append(F.normalize(box_feature, p=2, dim=-1).squeeze(0))
+
+        return feature_list
+
+    def encode_Text(self,input_text):
+        text = clip.tokenize([input_text]).to(self.device)
+        text_features = self.model.encode_text(text)
+        text_features = F.normalize(text_features, p=2, dim=-1)
+        return text_features
+
+    def cos_similarity(self, text_features: torch.Tensor, image_features: List[torch.Tensor]) -> List[float]:
+        """
+        计算文本特征向量与多个图像特征向量的余弦相似度
+
+        参数:
+        text_features (torch.Tensor): 文本的特征向量
+        image_features (List[torch.Tensor]): 图像的特征向量列表
+
+        返回:
+        List[float]: 相似度列表
+        """
+        similarities = []
+        for img_feature in image_features:
+            similarity = F.cosine_similarity(text_features, img_feature.unsqueeze(0)).item()
+            similarities.append(similarity)
+        return similarities
+
+
+
     def show_images(self, Top_image_paths: List[str], scores: List[float]):
         """
         显示多张图片并展示它们的相似度分数。
@@ -189,11 +242,16 @@ if __name__ == '__main__':
         query_text = input("请输入查询的文本：")
         # 计算图片与查询文本之间的相似度
         similarity_scores = searcher.calculate_similarity(image_paths, query_text)
+        # 按照相似度值（float）排序，从大到小
+        sorted_images = sorted(similarity_scores, key=lambda x: x[1], reverse=True)
 
-        n = int(input(f"请输入展示的图片数量 (最大 {len(image_paths)} 张): "))
-        print("====================================================================")
-        top_n_images, top_n_scores = searcher.Top_n_Pic(similarity_scores, n)
-        print("====================================================================")
+        # 获取前三大的图片路径
+        top_3_images = [image_path for image_path, similarity in sorted_images[:3]]
+
+        # 输出前三大的图片路径
+        print(top_3_images)
+        print("=======================================================================")
+        print("=======================================================================")
     # 展示这些图片
     # searcher.show_images(top_n_images, top_n_scores)
 
