@@ -28,8 +28,8 @@
         "batch_size": 4
     },
     "detection_cofig": {
-        "model_path": "./model/yolo_model/yolov5x.pt",
-        "conf":0.01,
+        "model_path": "./model/yolo_model/yolov5x6.pt",
+        "conf":0.05,
         "batch_size":32,
         "iou_threshold":1
     }

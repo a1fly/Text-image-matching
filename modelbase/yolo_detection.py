@@ -49,7 +49,9 @@ class YoloDetection:
         self.model = torch.hub.load('ultralytics/yolov5', 'custom', path=self.model_path)
         # self.model.eval()
         # self.model = torch.load(self.model_path)
-        self.model.eval()
+        # self.model = torch.load(self.model_path)
+        # self.model.eval()
+        self.model.conf = self.conf
 
     def batch_load_images(self, image_paths: List[str]) -> Tuple[List[str], List[Image.Image]]:
          """
@@ -72,7 +74,7 @@ class YoloDetection:
                  yield batch_paths, batch_images
                  batch_paths, batch_images = [], []
 
-    def detect_batch(self, image_paths: List[str],is_nms=False) -> List[List[Tuple[int, int, int, int]]]:
+    def detect_batch(self, image_paths: List[str],is_nms=True) -> List[List[Tuple[int, int, int, int]]]:
         """
         批量检测图像中的目标，并返回每张图片中检测到的对象方框坐标。
 
@@ -103,8 +105,11 @@ class YoloDetection:
 
                     filtered_boxes = boxes[keep.numpy().astype(int)]
                     batch_boxes.append(filtered_boxes)
+                    print(f"Before NMS: {len(boxes)}, After NMS: {len(filtered_boxes)}")
                 else:
                     batch_boxes.append(boxes)
+
+
 
 
             all_boxes.extend(batch_boxes)
