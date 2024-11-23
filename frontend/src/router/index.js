@@ -1,19 +1,19 @@
-import Vue from 'vue'   //引入Vue
-import Router from 'vue-router'  //引入vue-router
-import UserLogin from "../components/UserLogin.vue";
-Vue.use(Router)
+import Vue from 'vue';
+import VueRouter from 'vue-router';
 
-export default new Router({
-  routes: [
-    {
-      path: '/',
-      name: 'User_Login',
-      component: UserLogin
-    },
-    {
-      path: '/register',
-      name: 'User_Register',
-      component: () => import('../components/UserRegister.vue')
-    }
-  ]
-})
+Vue.use(VueRouter)
+import userLogin from '../components/UserLogin.vue';
+import userReg from '../components/UserRegister.vue';
+
+const routes = [
+    {path: '/login', component: userLogin},
+    {path: "/reg", component: userReg},
+
+]
+
+const router = new VueRouter({
+    mode: 'history',
+    routes:routes
+});
+
+export default router

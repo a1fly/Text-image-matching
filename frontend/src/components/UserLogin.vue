@@ -12,12 +12,12 @@
         </el-form-item>
 
         <el-form-item label="密码" prop="pass" class="loginItem" :required="false">
-          <el-input type="password" v-model="ruleForm.pass" autocomplete="off" placeholder="请输入密码"></el-input>
+          <el-input type="password" show-password v-model="ruleForm.pass" autocomplete="off" placeholder="请输入密码"></el-input>
         </el-form-item>
 
         <el-form-item class="loginItem">
           <el-button id="sub_button" type="primary" @click="submitForm('ruleForm')">提交</el-button>
-          <el-button  @click="resetForm('ruleForm')">注册</el-button>
+          <el-button  @click="GotoReg()">注册</el-button>
           <el-button type="text" @click="forgetPassword" class="forget-password" style="margin-left: 60px; ">忘记密码</el-button>
         </el-form-item>
 
@@ -80,6 +80,10 @@ export default {
       });
     },
 
+    GotoReg(){
+      this.$router.push('/reg');
+    },
+
     forgetPassword() {
       // 处理忘记密码的逻辑
       // 例如，跳转到忘记密码页面
@@ -115,6 +119,100 @@ export default {
 }
 </script>
 
-<style  src="../assets/Login_Register.css">
+<style  scoped>
 
+html, body, #app {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+}
+
+#LoginContainer {
+  display: flex;
+  height: 100%;
+  background: linear-gradient(135deg, #1aa4ff, #ee0979);
+  color: white;
+}
+
+.left-side {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.typewriter {
+
+  font-size: 42px;
+  color: white;
+  font-weight: bold;
+  white-space: pre-wrap; /* 使换行生效 */
+  text-align: center; /* 水平居中 */
+  margin-left: 50px;
+}
+
+
+
+
+
+.el-form-item__label {
+  color: #333;
+}
+
+.el-input__inner {
+  background: transparent;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  color: #333;
+}
+
+
+
+
+#sub_button {
+  background: #ff6a00;
+  border-color: #ff6a00;
+}
+
+#sub_button:hover {
+  background: #ee0979;
+  border-color: #ee0979;
+}
+
+
+.el-button--text.forget-password {
+  color: #ff6a00;
+  font-size: 14px;
+}
+
+.el-button--text.forget-password:hover {
+  color: #ee0979;
+}
+
+.loginItem{
+  margin-top: 30px;
+
+}
+.login-header {
+  font-size: 24px;
+  color: #333;
+  text-align: center;
+}
+.right-side {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+
+}
+
+.demo-ruleForm {
+  background: rgba(255, 255, 255, 0.8);
+  padding: 20px;
+  border-radius: 10px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  width: 400px;
+  height: 300px;
+}
 </style>
