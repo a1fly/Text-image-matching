@@ -39,7 +39,7 @@ class OcrModel:
 
 
 if __name__ == '__main__':
-    image_file = "../game.jpg"
+    image_file = "../resource/loss_pic/微信图片_20241115141839.jpg"
     model = OcrModel(config_path="../config.json",model_path="../model/ocr_model")
     text = model.extract_text(image_file)
 

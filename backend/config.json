@@ -25,7 +25,7 @@
         "model_path": "./model/translate_model",
         "max_text_size": 512,
         "num_beams": 4,
-        "batch_size": 4
+        "batch_size": 5
     },
     "detection_cofig": {
         "model_path": "./model/yolo_model/yolov5x6.pt",

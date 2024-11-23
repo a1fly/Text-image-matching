@@ -26,12 +26,12 @@ def normalize(scores):
 
 
 if __name__=='__main__':
-    config_path="./config.json"
+    config_path= "./config.json"
     searcher = CLIP(config_path)
     ip = ImageProcessor(config_path)
 
     # 图片文件夹的路径
-    picpath = "./resource/loss_pic"
+    picpath = "../resource/loss_pic"
     # 获取图片路径
     image_paths = ip.get_all_pic_paths(picpath)
     print(f"找到 {len(image_paths)} 张图片。\n")
@@ -41,35 +41,26 @@ if __name__=='__main__':
         exit(0)
 
     yolo = YoloDetection(config_path=config_path)
-    print(2)
+
 
     results = yolo.detect_batch(image_paths)
-    print(3)
-    # print(results)
-    # print("*********************************")
-    # print(results[0])
-    # print("*********************************")
-    # print(type(results))
 
-    # 第二步：使用blip
-    # blip_model = BLIP(config_path)
-    # captions = blip_model.generate_captions(image_paths)
         # 保存
-    for i, boxes in enumerate(results):
-        print("************", i,'*****************')
-        # 打开图片
-        img = Image.open(image_paths[i])
-        draw = ImageDraw.Draw(img)
-
-        # 如果有检测框，则绘制检测框
-        if boxes.any():
-            for box in boxes:
-                draw.rectangle(box, outline="red", width=3)  # 绘制红色边框
-
-        img_rgb = img.convert('RGB')
-
-        # 保存图像
-        img_rgb.save(f'./output_{i}.jpg')
+    # for i, boxes in enumerate(results):
+    #     print("************", i,'*****************')
+    #     # 打开图片
+    #     img = Image.open(image_paths[i])
+    #     draw = ImageDraw.Draw(img)
+    #
+    #     # 如果有检测框，则绘制检测框
+    #     if boxes.any():
+    #         for box in boxes:
+    #             draw.rectangle(box, outline="red", width=3)  # 绘制红色边框
+    #
+    #     img_rgb = img.convert('RGB')
+    #
+    #     # 保存图像
+    #     img_rgb.save(f'./output_{i}.jpg')
 
     # 预先对所有图片进行特征编码
     image_features = []
@@ -202,13 +193,6 @@ if __name__=='__main__':
         for path in list(zip(sorted_image_paths,sorted_sc)):
             print(path)
 
-        plt.figure(figsize=(8, 8))
-        plt.imshow(Image.open(sorted_image_paths[0]))
-        plt.show(block=False)
-        plt.pause(1)		#暂停秒数，延长显示时间
-        # print("yolo相似度：  ",sorted(score1, reverse=True))
-        # print("***********************************************")
-        # print("clip相似度：  ",sorted(score2, reverse=True))
 
 
 
