@@ -1,40 +1,25 @@
 <script>
+import Header from "@/components/Header.vue";
+import Asider from "@/components/Asider.vue";
+
 export default {
+  components: {
+    Header,
+    Asider
+  },
   data() {
     return {
-      isSidebarCollapsed: false, // 是否收缩侧边栏
-      isMobile: false, // 是否是手机或平板
+      isSidebarCollapsed: true,
     };
   },
   methods: {
-    // 处理侧边栏选项点击事件
-    handleSidebarClick(option) {
-      if (option === "lostInfo") {
-        alert("填写失物信息功能尚未实现");
-      } else if (option === "findLost") {
-        alert("寻找失物功能尚未实现");
-      } else if (option === "exit") {
-        this.$router.push('/login');
-      } else if (option === "avatar") {
-        alert("头像设置功能尚未实现");
-      } else if (option === "contact") {
-        alert("联系方式设置功能尚未实现");
-      }
+    updateStatus(value) {
+      this.isSidebarCollapsed = value;
     },
     // 监听窗口大小
     handleResize() {
-      if (window.innerWidth <= 768) {
-        this.isMobile = true;
-        this.isSidebarCollapsed = true; // 默认在小屏幕上收起侧边栏
-      } else {
-        this.isMobile = false;
-        this.isSidebarCollapsed = false; // 在大屏幕上始终显示侧边栏
-      }
+      this.isSidebarCollapsed = window.innerWidth <= 768;
     },
-    // 切换侧边栏显示状态
-    toggleSidebar() {
-      this.isSidebarCollapsed = !this.isSidebarCollapsed;
-    }
   },
   mounted() {
     // 初始化窗口大小监听
@@ -44,7 +29,7 @@ export default {
   beforeDestroy() {
     // 移除窗口大小监听器
     window.removeEventListener("resize", this.handleResize);
-  }
+  },
 };
 </script>
 
@@ -53,65 +38,55 @@ export default {
     <el-container id="container">
       <!-- 头部 -->
       <el-header height="100px" class="header">
-        <div class="header-left">
-          <img src="../assets/logo.png" alt="logo" class="logo" />
-          <span class="system-name">失物招领系统</span>
-        </div>
-
-        <!-- 汉堡图标 -->
-        <div v-if="isMobile" class="hamburger" @click="toggleSidebar">
-          <i class="el-icon-menu"></i>
-        </div>
+        <Header @toggle="updateStatus"></Header>
       </el-header>
-
       <el-container>
         <!-- 侧边栏 -->
         <el-aside
-          class="aside"
-          :class="{ collapsed: isSidebarCollapsed }"
-          :style="{ width: isSidebarCollapsed ? '0px' : '250px' }"
+            class="aside"
+            :style="{ width: isSidebarCollapsed ? '0px' : '250px' }"
         >
-          <el-menu default-active="1">
-            <el-menu-item index="1" @click="handleSidebarClick('lostInfo')">
-              <i class="el-icon-edit"></i>
-              填写失物信息
-            </el-menu-item>
-            <el-menu-item index="2" @click="handleSidebarClick('findLost')">
-              <i class="el-icon-search"></i>
-              寻找失物
-            </el-menu-item>
-
-            <!-- 子菜单 -->
-            <el-submenu index="3">
-              <template #title>
-                <i class="el-icon-setting"></i>
-                个人设置
-              </template>
-              <el-menu-item index="3-1" @click="handleSidebarClick('avatar')">
-                头像设置
-              </el-menu-item>
-              <el-menu-item index="3-2" @click="handleSidebarClick('contact')">
-                联系方式设置
-              </el-menu-item>
-            </el-submenu>
-
-            <el-menu-item index="4" @click="handleSidebarClick('exit')">
-              <i class="el-icon-switch-button"></i>
-              退出登录
-            </el-menu-item>
-          </el-menu>
+          <Asider></Asider>
         </el-aside>
-
         <!-- 主内容 -->
         <el-main class="main-content">
-          Main 内容
+          <div class="center-content">
+            <img src="../assets/logo2.jpg" alt="不知道放啥" width="110%" height="110%">
+          </div>
         </el-main>
       </el-container>
     </el-container>
   </div>
 </template>
 
+
 <style scoped>
+.el-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 20px;
+  box-sizing: border-box;
+  background: linear-gradient(to right, #409eff, #66b1ff);
+  color: white;
+  font-weight: bold;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1); /* 增加头部阴影 */
+}
+
+
+.main-content {
+  display: flex; /* 启用 Flexbox 布局 */
+  justify-content: center; /* 水平居中 */
+  align-items: center; /* 垂直居中 */
+  height: 100%; /* 确保主内容区域占满可用高度 */
+  background-color: #f5f5f5; /* 添加背景色以便测试 */
+}
+
+.center-content {
+  text-align: center;
+}
+
+
 /* 布局基础样式 */
 #allbox {
   width: 100%;
@@ -121,101 +96,46 @@ export default {
 #container {
   width: 100%;
   height: 100%;
+  background-color: #f5f7fa; /* 整体背景色 */
 }
 
-/* 头部样式 */
-.el-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 0 20px;
-  box-sizing: border-box;
-  background: linear-gradient(to right, #66ccff, #0099ff);
-  color: white;
-  font-weight: bold;
-}
-
-.header-left {
-  display: flex;
-  align-items: center;
-}
-
-.logo {
-  width: 60px;
-  height: 60px;
-}
-
-.system-name {
-  font-size: 20px;
-  margin-left: 10px;
-}
-
-/* 汉堡图标 */
-.hamburger {
-  font-size: 24px;
-  cursor: pointer;
-  color: white;
-}
 
 /* 侧边栏样式 */
 .el-aside {
-  background-color: #d3dce6;
+  background-color: #ffffff;
+  box-shadow: 2px 0 8px rgba(0, 0, 0, 0.1); /* 增加侧边栏阴影 */
   overflow: hidden;
   transition: width 0.3s ease, transform 0.3s ease;
   position: fixed; /* 固定侧边栏，不挤压主内容 */
   height: 100%;
   z-index: 10;
   left: 0;
+  border-right: 1px solid #ebeef5; /* 分隔线 */
 }
 
 .el-aside.collapsed {
   transform: translateX(-100%);
 }
 
-.el-menu-item {
-  font-size: 16px;
-  display: flex;
-  align-items: center;
-  padding-left: 20px !important;
-}
-
-.el-menu-item i {
-  margin-right: 10px;
-}
-
-.el-menu-item:hover {
-  color: #0099ff;
-  background-color: #e9eef3;
-  cursor: pointer;
-}
-
-.el-submenu__title {
-  font-size: 16px;
-  padding-left: 20px !important;
-}
-
-.el-submenu:hover .el-submenu__title {
-  color: #0099ff;
-}
 
 /* 主内容样式 */
 .el-main {
-  background-color: #e9eef3;
+  background-color: #ffffff; /* 内容背景色 */
   color: #333;
   text-align: center;
   line-height: 160px;
   padding-left: 250px; /* 为侧边栏留出空间 */
   transition: padding-left 0.3s ease;
+  box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.1); /* 内容区顶部阴影 */
+  border-radius: 10px; /* 内容区圆角 */
 }
 
-.main-content {
-  padding: 20px;
-}
 
-/* 小屏幕调整 */
+/* 响应式优化 */
 @media (max-width: 768px) {
   .el-main {
-    padding-left: 0; /* 小屏幕时，移除侧边栏的 padding */
+    padding-left: 0;
   }
 }
+
 </style>
