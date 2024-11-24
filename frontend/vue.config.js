@@ -1,6 +1,7 @@
 // vue.config.js
 module.exports = {
   devServer: {
+    webSocketServer:false,
     port: 8081,          // 设置端口
     host: '0.0.0.0',     // 允许外部访问，默认是 'localhost'
     https: false,        // 是否启用 https
@@ -11,5 +12,6 @@ module.exports = {
         pathRewrite: { '^/': '' }      // 重写路径
       }
     }
-  }
+  },
+
 }
