@@ -90,6 +90,9 @@ export default {
   },
   methods: {
 
+    goToLogin() {
+      this.$router.push('/login');
+    },
     submitForm(formName) {
       this.$refs[formName].validate((valid) => {
         if (valid) {
@@ -109,8 +112,16 @@ export default {
           axios.post('/api/reg', formData)
               .then(response => {
                 // 请求成功后的回调
-                console.log('注册成功：', response.data);
-                alert('注册成功！');
+                if (response.data.success)
+                {
+                  console.log('注册成功：', response.data);
+                  alert('注册成功！');
+                  this.$router.push('/login');
+                }else
+                {
+                  alert('注册失败');
+                }
+
               })
               .catch(error => {
                 // 请求失败后的回调
@@ -131,9 +142,7 @@ export default {
         callback();
       }
     },
-    goToLogin() {
-      this.$router.push('/login');
-    },
+
     typewriterEffect(text, element, index = 0) {
       if (index < text.length) {
         const currentChar = text.charAt(index);

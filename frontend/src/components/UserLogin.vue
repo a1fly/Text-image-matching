@@ -66,9 +66,16 @@ export default {
             acc: this.ruleForm.acc,
             pass: hashedPassword
           }).then(response => {
-            console.log(response);
-            alert('登录成功！');
-            // 处理登录成功的逻辑
+            console.log("response: ",response);
+            if(response.data.success)
+            {
+              // 处理登录成功的逻辑
+              alert('登录成功！');
+            }else
+            {
+              alert('登录失败，请检查账号和密码')
+            }
+
           }).catch(error => {
             console.error('登录失败:', error);
             alert('登录失败，请检查账号和密码');
