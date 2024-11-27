@@ -67,7 +67,7 @@ export default {
   align-items: center;
   padding: 0 20px;
   box-sizing: border-box;
-  background: linear-gradient(to right, #409eff, #66b1ff);
+  background: linear-gradient(to right, #e13a3a, #f2fd08);
   color: white;
   font-weight: bold;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1); /* 增加头部阴影 */
