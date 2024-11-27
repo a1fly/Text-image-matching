@@ -8,50 +8,47 @@
       <el-container>
         <!-- 侧边栏 -->
         <el-aside
-          class="aside"
-          :style="{ width: isSidebarCollapsed ? '0px' : '250px' }"
+            class="aside"
+            :style="{ width: isSidebarCollapsed ? '0px' : '250px' }"
         >
           <Asider></Asider>
         </el-aside>
         <!-- 主内容 -->
         <el-main class="main-content">
           <div class="center-content">
-
             <el-form
-              :model="lostAndFoundForm"
-              :rules="rules"
-              ref="lostAndFoundForm"
-              label-width="120px"
+                :model="lostAndFoundForm"
+                :rules="rules"
+                ref="lostAndFoundForm"
+                label-width="120px"
             >
               <!-- 失物描述 -->
               <el-form-item label="失物描述：" prop="description">
                 <el-input
-                  v-model="lostAndFoundForm.description"
-                  placeholder="请输入失物描述"
+                    v-model="lostAndFoundForm.description"
+                    placeholder="请输入失物描述"
                 ></el-input>
               </el-form-item>
 
               <!-- 发现地点 -->
               <el-form-item label="发现地点：" prop="location">
                 <el-input
-                  v-model="lostAndFoundForm.location"
-                  placeholder="请输入发现地点"
+                    v-model="lostAndFoundForm.location"
+                    placeholder="请输入发现地点"
                 ></el-input>
               </el-form-item>
-
-
 
               <!-- 失物照片 -->
               <el-form-item label="失物照片：" prop="lostImage">
                 <el-upload
-                  action="#"
-                  :file-list.sync="lostAndFoundForm.lostImage"
-                  list-type="picture"
-                  :on-preview="handlePreview"
-                  :on-change="handleChange"
-                  :auto-upload="false"
-                  :on-remove="handleRemove"
-                  :limit="1"
+                    action="#"
+                    :file-list.sync="lostAndFoundForm.lostImage"
+                    list-type="picture"
+                    :on-preview="handlePreview"
+                    :on-change="uploadLostImage"
+                    :auto-upload="false"
+                    :on-remove="RemoveLostImage"
+                    :limit="1"
                 >
                   <el-button size="small" type="primary">上传图片</el-button>
                 </el-upload>
@@ -59,40 +56,41 @@
 
               <!-- 处置方式 -->
               <el-form-item label="处置方式：" prop="method">
-                <el-radio-group v-model="lostAndFoundForm.method">
+                <el-radio-group :key="lostAndFoundForm.method" v-model="lostAndFoundForm.method">
                   <el-radio label="1">失物放置在发现地点</el-radio>
                   <el-radio label="2">失主联系我</el-radio>
                   <el-radio label="3">放置在指定地点</el-radio>
                 </el-radio-group>
+
               </el-form-item>
 
               <!-- 放置地点 -->
               <el-form-item
-                v-if="lostAndFoundForm.method === '3'"
-                label="放置地点："
-                prop="designatedPlace"
+                  v-if="lostAndFoundForm.method === '3'"
+                  label="放置地点："
+                  prop="designatedPlace"
               >
                 <el-input
-                  v-model="lostAndFoundForm.designatedPlace"
-                  placeholder="请输入放置地点"
+                    v-model="lostAndFoundForm.designatedPlace"
+                    placeholder="请输入放置地点"
                 ></el-input>
               </el-form-item>
 
               <!-- 放置地点图片上传 -->
               <el-form-item
-                v-if="lostAndFoundForm.method === '3'"
-                label="地点图片："
-                prop="designatedPlaceImage"
+                  v-if="lostAndFoundForm.method === '3'"
+                  label="地点图片："
+                  prop="designatedPlaceImage"
               >
                 <el-upload
-                  action="#"
-                  :file-list.sync="lostAndFoundForm.designatedPlaceImage"
-                  list-type="picture"
-                  :on-preview="handlePreview"
-                  :on-change="handleChange"
-                  :auto-upload="false"
-                  :on-remove="handleRemove"
-                  :limit="1"
+                    action="#"
+                    :file-list.sync="lostAndFoundForm.designatedPlaceImage"
+                    list-type="picture"
+                    :on-preview="handlePreview"
+                    :on-change="uploadPlaceImage"
+                    :auto-upload="false"
+                    :on-remove="RemovePlaceImage"
+                    :limit="1"
                 >
                   <el-button size="small" type="primary">上传图片</el-button>
                 </el-upload>
@@ -113,6 +111,7 @@
 <script>
 import Header from "@/components/Header.vue";
 import Asider from "@/components/Asider.vue";
+import axios from 'axios';
 
 export default {
   components: {
@@ -121,26 +120,35 @@ export default {
   },
   data() {
     return {
+      // 控制侧边栏折叠状态
       isSidebarCollapsed: true,
+      // 表单模型
       lostAndFoundForm: {
-        description: "",
-        location: "",
-        locationImage: [],
-        lostImage: [],
-        method: "",
-        designatedPlace: "",
-        designatedPlaceImage: [],
+        description: "", // 失物描述，字符串格式
+        location: "", // 发现地点，字符串格式
+        lostImage: [], // 失物照片，数组格式
+        method: "", // 处置方式，字符串格式
+        designatedPlace: "", // 放置地点，字符串格式
+        designatedPlaceImage: [], // 放置地点图片，数组格式
       },
+
+      // 表单验证规则
       rules: {
-        description: [{ required: false }],
-        location: [{ required: false }],
         lostImage: [
           {
             required: true,
             message: "请上传失物照片",
             trigger: "change",
+            validator: (rule, value) => {
+              if (!value || value.length === 0) {
+                return new Error("请上传失物照片");
+              }
+              return true;
+            },
           },
         ],
+
+
         method: [
           {
             required: true,
@@ -148,29 +156,86 @@ export default {
             trigger: "change",
           },
         ],
-        designatedPlace: [{ required: false }],
+        designatedPlace: [
+          {
+            required: (form) => form.method === "3",
+            message: "请填写放置地点",
+            trigger: "blur",
+          },
+        ],
       },
     };
   },
   methods: {
-    handleRemove(file) {
-      console.log("Removed file:", file);
+    uploadLostImage(file) {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        this.lostAndFoundForm.lostImage.push({
+          uid: file.uid, // 唯一标识符
+          name: file.name, // 文件名
+          url: e.target.result, // Base64 数据
+        });
+      };
+      reader.readAsDataURL(file.raw);
+    },
+
+    RemoveLostImage() {
+      this.lostAndFoundForm.lostImage = [];
     },
     handlePreview(file) {
       console.log("Preview file:", file);
     },
-    handleChange(file, fileList) {
-      console.log("Uploaded files:", fileList);
+    uploadPlaceImage(file) {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        this.lostAndFoundForm.designatedPlaceImage.push({
+          url: e.target.result,
+          name: file.name,
+          uid: file.uid,
+        }); // Base64 数据
+      };
+      reader.readAsDataURL(file.raw);
     },
-    onSubmit() {
-      this.$refs.lostAndFoundForm.validate((valid) => {
-        if (valid) {
-          console.log("表单提交内容：", this.lostAndFoundForm);
-        } else {
-          console.error("表单验证失败");
-        }
-      });
+    RemovePlaceImage() {
+      this.lostAndFoundForm.designatedPlaceImage = [];
     },
+
+
+    async onSubmit() {
+      if (
+          (this.lostAndFoundForm.method === "3" && this.lostAndFoundForm.designatedPlace === "") ||
+          !this.lostAndFoundForm.lostImage ||
+          this.lostAndFoundForm.method === ""
+      ) {
+        alert("请完善必填项");
+        return;
+      }
+
+      try {
+        const response = await axios.post("/api/writeInfo", this.lostAndFoundForm);
+        console.log("服务器响应：", response.data);
+        alert("提交成功！");
+        this.resetForm();
+      } catch (error) {
+        console.error("提交失败：", error);
+        alert("提交失败，请稍后再试！");
+      }
+    },
+
+
+    // 重置表单方法
+    resetForm() {
+      this.lostAndFoundForm = {
+        description: "",
+        location: "",
+        lostImage: [],
+        method: "",
+        designatedPlace: "",
+        designatedPlaceImage: [],
+      };
+    },
+
+
     updateStatus(value) {
       this.isSidebarCollapsed = value;
     },
@@ -178,6 +243,8 @@ export default {
       this.isSidebarCollapsed = window.innerWidth <= 768;
     },
   },
+
+
   mounted() {
     window.addEventListener("resize", this.handleResize);
     this.handleResize();
@@ -215,10 +282,10 @@ html, body {
   align-items: center;
   padding: 0 20px;
   box-sizing: border-box;
-  background: linear-gradient(to right, #409eff, #66b1ff);
-  color: white;
+  background: linear-gradient(to right, #34cbff, #dda71b);
+  color: #ffffff;
   font-weight: bold;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1); /* 增加头部阴影 */
+  box-shadow: 0 2px 8px rgba(243, 102, 102, 0.1); /* 增加头部阴影 */
 }
 
 .main-content {
@@ -271,9 +338,10 @@ html, body {
   .el-main {
     padding-left: 0;
   }
+
   .center-content {
-  width: 100%; /* 确保内容区宽度 */
-}
+    width: 100%;
+  }
 
 }
 
