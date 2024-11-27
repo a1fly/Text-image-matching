@@ -17,7 +17,7 @@
 
         <el-form-item class="loginItem">
           <el-button id="sub_button" type="primary" @click="submitForm('ruleForm')">提交</el-button>
-          <el-button  @click="GotoReg()">注册</el-button>
+          <el-button  @click="GotoReg">注册</el-button>
           <el-button type="text" @click="forgetPassword" class="forget-password" style="margin-left: 60px; ">忘记密码</el-button>
         </el-form-item>
 
@@ -57,6 +57,9 @@ export default {
     };
   },
   methods: {
+    GotoReg() {
+      this.$router.push('/reg');
+    },
     submitForm(formName) {
       this.$refs[formName].validate((valid) => {
         if (valid) {
@@ -66,16 +69,13 @@ export default {
             acc: this.ruleForm.acc,
             pass: hashedPassword
           }).then(response => {
-            console.log("response: ",response);
-            if(response.data.success)
-            {
+            console.log("response: ", response);
+            if (response.data.success) {
               // 处理登录成功的逻辑
               alert('登录成功！');
-            }else
-            {
+            } else {
               alert('登录失败，请检查账号和密码')
             }
-
           }).catch(error => {
             console.error('登录失败:', error);
             alert('登录失败，请检查账号和密码');
@@ -87,9 +87,7 @@ export default {
       });
     },
 
-    GotoReg(){
-      this.$router.push('/reg');
-    },
+
 
     forgetPassword() {
       // 处理忘记密码的逻辑
@@ -125,9 +123,7 @@ export default {
   }
 }
 </script>
-
-<style  scoped>
-
+<style scoped>
 html, body, #app {
   height: 100%;
   margin: 0;
@@ -150,7 +146,6 @@ html, body, #app {
 }
 
 .typewriter {
-
   font-size: 42px;
   color: white;
   font-weight: bold;
@@ -158,10 +153,6 @@ html, body, #app {
   text-align: center; /* 水平居中 */
   margin-left: 50px;
 }
-
-
-
-
 
 .el-form-item__label {
   color: #333;
@@ -174,9 +165,6 @@ html, body, #app {
   color: #333;
 }
 
-
-
-
 #sub_button {
   background: #ff6a00;
   border-color: #ff6a00;
@@ -187,7 +175,6 @@ html, body, #app {
   border-color: #ee0979;
 }
 
-
 .el-button--text.forget-password {
   color: #ff6a00;
   font-size: 14px;
@@ -197,21 +184,21 @@ html, body, #app {
   color: #ee0979;
 }
 
-.loginItem{
+.loginItem {
   margin-top: 30px;
-
 }
+
 .login-header {
   font-size: 24px;
   color: #333;
   text-align: center;
 }
+
 .right-side {
   flex: 1;
   display: flex;
   justify-content: center;
   align-items: center;
-
 }
 
 .demo-ruleForm {
@@ -221,5 +208,64 @@ html, body, #app {
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
   width: 400px;
   height: 300px;
+}
+
+/* 手机端适配 */
+@media (max-width: 768px) {
+  #LoginContainer {
+    flex-direction: column; /* 改为垂直布局 */
+    padding: 20px;
+  }
+
+  .left-side {
+    margin-bottom: 20px; /* 添加间距 */
+    flex: unset;
+    height: 150px; /* 设置高度 */
+  }
+
+  .typewriter {
+    font-size: 24px; /* 调整字体大小 */
+    margin-left: 0;
+  }
+
+  .right-side {
+    flex: unset;
+    width: 100%; /* 占满宽度 */
+  }
+
+  .demo-ruleForm {
+    width: 100%; /* 占满屏幕宽度 */
+    max-width: 350px; /* 限制最大宽度 */
+    height: auto; /* 自适应高度 */
+    padding: 20px;
+  }
+
+  .login-header {
+    font-size: 20px; /* 调整标题字体 */
+  }
+
+  .el-form-item {
+    margin-top: 20px; /* 减少间距 */
+  }
+
+  .el-input__inner {
+    font-size: 14px; /* 调整输入框字体 */
+  }
+
+  #sub_button {
+    width: 100%; /* 按钮宽度自适应 */
+    margin-bottom: 10px; /* 添加间距 */
+  }
+
+  .el-button {
+    width: 100%; /* 按钮自适应宽度 */
+    margin-bottom: 10px;
+  }
+
+  .el-button--text.forget-password {
+    //margin-left: 100px;
+    text-align: center;
+    //width: 100%; /* 忘记密码按钮居中 */
+  }
 }
 </style>
