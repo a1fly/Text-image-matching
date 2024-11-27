@@ -46,6 +46,19 @@ export default {
     handleSidebarClick(route) {
       // 处理点击事件
       console.log(`点击了 to ${route}`);
+      if (route === 'gohome' && this.$route.path !== '/home') {
+        this.$router.push('/home');
+      } else if (route === 'lostInfo' && this.$route.path !== '/write') {
+        this.$router.push('/write');
+      } else if (route === 'findLost' && this.$route.path !== '/findLost') {
+        this.$router.push('/findLost');
+      } else if (route === 'avatar' && this.$route.path !== '/avatar') {
+        this.$router.push('/avatar');
+      } else if (route === 'contact' && this.$route.path !== '/contact') {
+        this.$router.push('/contact');
+      } else if (route === 'exit' ) {
+        this.$router.push('/login');
+      }
 
     }
   }
