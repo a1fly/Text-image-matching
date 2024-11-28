@@ -7,29 +7,44 @@
           <span slot="title">首页</span>
         </el-menu-item>
         <el-menu-item index="2" @click="handleSidebarClick('lostInfo')">
-          <i class="el-icon-upload"></i>
+          <i class="el-icon-edit"></i>
           <span slot="title">填写失物信息</span>
         </el-menu-item>
-        <el-menu-item index="3" @click="handleSidebarClick('findLost')">
-          <i class="el-icon-search"></i>
-          <span slot="title">寻找失物</span>
-        </el-menu-item>
+
 
         <!-- 子菜单 -->
+        <el-submenu index="3">
+          <template #title>
+            <i class="el-icon-search"></i>
+            <span>寻找失物</span>
+          </template>
+          <el-menu-item index="3-1" @click="handleSidebarClick('view')">
+            <i class="el-icon-reading"></i>
+            浏览全部
+          </el-menu-item>
+          <el-menu-item index="3-2">
+            <i class="el-icon-cpu"></i>
+            智能搜查
+          </el-menu-item>
+        </el-submenu>
+
+         <!-- 子菜单 -->
         <el-submenu index="4">
           <template #title>
             <i class="el-icon-setting"></i>
             <span>个人设置</span>
           </template>
           <el-menu-item index="4-1" @click="handleSidebarClick('avatar')">
+            <i class="el-icon-user"></i>
             头像设置
           </el-menu-item>
           <el-menu-item index="4-2" @click="handleSidebarClick('contact')">
+            <i class="el-icon-phone-outline"></i>
             联系方式设置
           </el-menu-item>
         </el-submenu>
 
-        <el-menu-item index="5" @click="handleSidebarClick('exit')">
+        <el-menu-item index="6" @click="handleSidebarClick('exit')">
           <i class="el-icon-switch-button"></i>
           <span slot="title">退出登录</span>
         </el-menu-item>
@@ -50,8 +65,8 @@ export default {
         this.$router.push('/home');
       } else if (route === 'lostInfo' && this.$route.path !== '/write') {
         this.$router.push('/write');
-      } else if (route === 'findLost' && this.$route.path !== '/findLost') {
-        this.$router.push('/findLost');
+      } else if (route === 'view' && this.$route.path !== '/view') {
+        this.$router.push('/view');
       } else if (route === 'avatar' && this.$route.path !== '/avatar') {
         this.$router.push('/avatar');
       } else if (route === 'contact' && this.$route.path !== '/contact') {

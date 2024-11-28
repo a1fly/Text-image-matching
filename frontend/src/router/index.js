@@ -6,12 +6,14 @@ import userLogin from '../components/UserLogin.vue';
 import userReg from '../components/UserRegister.vue';
 import Mainhome from '../components/Mainhome.vue';
 import WriteInfo from "@/components/writeInfo.vue";
+import ViewInfo from "@/components/View_Info.vue";
 
 const routes = [
     {path: '/login', component: userLogin},
     {path: "/reg", component: userReg},
     {path: "/home", component: Mainhome},
     {path: "/write", component: WriteInfo},
+    {path: "/view", component: ViewInfo},
 
 ]
 
