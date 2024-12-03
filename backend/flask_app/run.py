@@ -1,9 +1,11 @@
 from flask import Flask, request, jsonify,send_from_directory
-from werkzeug.utils import secure_filename
+from werkzeug.utils import secure_filename,send_file
 import requests
 import os
 import base64
 from datetime import datetime
+from SaveFunc.savewriteInfo import SaveInfo
+
 
 app = Flask(__name__)
 
@@ -12,7 +14,7 @@ app = Flask(__name__)
 UPLOAD_FOLDER = '../../resource'
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
-
+saveTool=SaveInfo()
 
 # 登录验证
 @app.route('/api/login', methods=['POST'])
@@ -48,6 +50,7 @@ def check_reg():
 
 @app.route('/api/writeInfo', methods=['POST'])
 def write_info():
+    print("已经接收到信息")
     data = request.json
     description = data.get('description')
     location = data.get('location')
@@ -55,6 +58,8 @@ def write_info():
     designated_place = data.get('designatedPlace')
     lost_images = data.get('lostImage', [])
     designated_place_images = data.get('designatedPlaceImage', [])
+
+
 
     print(f"描述: {description}, 位置: {location}, 方法: {method}, 放置地点: {designated_place}")
     print(f"失物图片数量: {len(lost_images)}, 放置地点图片数量: {len(designated_place_images)}")
@@ -68,6 +73,22 @@ def write_info():
 
     current_time = datetime.now()
     formatname = current_time.strftime("%Y-%m-%d-%H-%M-%S")
+
+
+    if len(designated_place_images)!=0:
+        saveTool.haveplaceimg=1
+    else:
+        saveTool.haveplaceimg=0
+
+    saveTool.save(description,
+                  location,
+                  formatname.split("-"),
+                  method,
+                  "",
+                  "",
+                  designated_place,
+                  saveTool.haveplaceimg
+    )
 
     # 保存失物图片
     saved_lost_images = []
@@ -99,20 +120,43 @@ def save_base64_image(base64_data, filename):
     try:
         header, base64_data = base64_data.split(',', 1)
         img_data = base64.b64decode(base64_data)
-        with open(os.path.join(UPLOAD_FOLDER, filename), 'wb') as file:
-            file.write(img_data)
+
+        # 0结尾表示为失物图片，放进失物文件夹
+        if filename.endswith('0.png'):
+            with open(os.path.join(UPLOAD_FOLDER, "loss_pic/"+filename), 'wb') as file:
+                file.write(img_data)
+        else:
+            # 1结尾表示为地点图片，放进指定地点文件夹
+            with open(os.path.join(UPLOAD_FOLDER, "place_pic/"+filename), 'wb') as file:
+                file.write(img_data)
+
     except Exception as e:
         print("图片保存失败:", e)
         raise
 
+@app.route('/static/uploads/<filename>', methods=['GET'])
+def get_file(filename,kind):
+
+    # kind 为0或者1，表示要传递失物图片还是地点图片
+
+    print("==================================================")
+    print("获取图片的代码被调用了，filename为：", filename)
+    print("==================================================")
+    if kind == 0:
+        return send_from_directory('../../resource/loss_pic', filename)
+    if kind == 1:
+        return send_from_directory('../../resource/place_pic', filename)
 
 
-@app.route('/static/uploads/<filename>')
-def uploaded_file(filename):
-    return send_from_directory(app.config['UPLOAD_FOLDER'], filename)
+
+
+
+
+
+
 
 if __name__ == '__main__':
-    app.run(debug=True, host='0.0.0.0', port=5000)
+    app.run(debug=True, host='0.0.0.0', port=5001)
 
 
 
