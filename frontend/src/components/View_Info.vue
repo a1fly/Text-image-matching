@@ -39,7 +39,7 @@
                   direction="horizontal">
                 <el-descriptions-item>
                   <template slot="label">
-                    <i class="el-icon-user"></i>
+                    <i class="el-icon-document"></i>
                     失物描述
                   </template>
                   <span class="text-ellipsis" :title="item.description">{{ item.description }}</span>
@@ -47,11 +47,27 @@
 
                 <el-descriptions-item>
                   <template slot="label">
-                    <i class="el-icon-mobile-phone"></i>
+                    <i class="el-icon-location-outline"></i>
                     发现地点
                   </template>
                   <span class="text-ellipsis" :title="item.location">{{ item.location }}</span>
                 </el-descriptions-item>
+
+                 <el-descriptions-item>
+                  <template slot="label">
+                    <i class="el-icon-time"></i>
+                    发现时间
+                  </template>
+                  <span class="text-ellipsis" :title="item.findtime">
+                    {{ item.findtime[0]}}年
+                    {{ item.findtime[1]}}月
+                    {{ item.findtime[2]}}日
+                    {{ item.findtime[3]}}时
+                    {{ item.findtime[4]}}分
+                    {{ item.findtime[5]}}秒
+                  </span>
+                </el-descriptions-item>
+
               </el-descriptions>
             </div>
           </div>
@@ -151,6 +167,7 @@
 <script>
 import Header from "@/components/Header.vue";
 import Asider from "@/components/Asider.vue";
+const staticimg_path="http://localhost:5000/static/uploads";
 
 export default {
   components: {
@@ -160,19 +177,19 @@ export default {
   data() {
     return {
       isSidebarCollapsed: true,
-      dialogVisible: false, // 控制对话框的显示与隐藏
       previewVisible: false, // 控制图片预览对话框的显示与隐藏
+      contactVisible: false,
+
       previewImage: '', // 存储预览的图片 URL
       lostItemDescription: '', // 存储失物描述
       lostItemLocation: '', // 存储失物地点
-
       contactmethod: '',
       contact: '',
       contactNum: '',
       designatePlace: '',
       PlaceimageUrl: '',
+      findtime:'',
 
-      contactVisible: false,
 
       items: [
         {
@@ -183,7 +200,8 @@ export default {
           contact: "QQ号",
           contactNum: "1113833537",
           designatePlace: "寝室楼下",
-          PlaceimageUrl: "https://th.bing.com/th/id/R.252826008d1a3551fb5cbb1b1418c99a?rik=KEWke5us59waIg&riu=http%3a%2f%2fimg.mp.sohu.com%2fupload%2f20180713%2f1719cdb4f431475593494115864debff_th.jpg&ehk=cVzyJl1s1NHP1LRrF8M938oorDyBF7nx5kqjxTIaj3g%3d&risl=&pid=ImgRaw&r=0"
+          PlaceimageUrl: "https://th.bing.com/th/id/R.252826008d1a3551fb5cbb1b1418c99a?rik=KEWke5us59waIg&riu=http%3a%2f%2fimg.mp.sohu.com%2fupload%2f20180713%2f1719cdb4f431475593494115864debff_th.jpg&ehk=cVzyJl1s1NHP1LRrF8M938oorDyBF7nx5kqjxTIaj3g%3d&risl=&pid=ImgRaw&r=0",
+          findtime:[2024,11,27,23,37,33]
         },
         {
           description: '一只黑色背包',
@@ -193,7 +211,8 @@ export default {
           contact: "微信号",
           contactNum: "1sadasd3537",
           designatePlace: "",
-          PlaceimageUrl: ""
+          PlaceimageUrl: "",
+          findtime:[2022,10,12,16,17,23]
         },
       ]
     };
@@ -202,7 +221,17 @@ export default {
     // 确认是否领取
     check(){
       alert("已领取！！！")
+      this.getimagefromback("2024-11-27-23-37-33-0.png")
+      // this.contactVisible =false;
     },
+
+
+    // 从后端获取图片
+    getimagefromback(filename)
+    {
+      this.PlaceimageUrl = `${staticimg_path}/${filename}`;
+    },
+
     updateStatus(value) {
       this.isSidebarCollapsed = value;
     },
@@ -211,7 +240,9 @@ export default {
       this.isSidebarCollapsed = window.innerWidth <= 768;
     },
     // 点击事件，展示失物信息
-    handleInfoClick(description, location, contactmethod, contact, contactNum, designatePlace, PlaceimageUrl) {
+    handleInfoClick(description, location, contactmethod,
+                    contact, contactNum,
+                    designatePlace, PlaceimageUrl,findtime) {
       this.lostItemDescription = description;
       this.lostItemLocation = location;
       this.contactmethod = contactmethod;
@@ -219,13 +250,12 @@ export default {
       this.contactNum = contactNum;
       this.designatePlace = designatePlace;
       this.PlaceimageUrl = PlaceimageUrl;
+      this.findtime = findtime;
 
 
-      this.dialogVisible = true; // 显示对话框
+      this.contactVisible = true; // 显示对话框
     },
-    handleClose() {
-      this.dialogVisible = false; // 关闭对话框
-    },
+
     handleClaim() {
       this.$message({
         message: "查看领取方式的按钮被点击了！",
