@@ -148,7 +148,6 @@ export default {
           },
         ],
 
-
         method: [
           {
             required: true,
@@ -156,6 +155,16 @@ export default {
             trigger: "change",
           },
         ],
+
+        // 添加发现地点的必填规则
+        location: [
+          {
+            required: true,
+            message: "请填写发现地点",
+            trigger: "blur", // 触发规则时机是失去焦点
+          },
+        ],
+
         designatedPlace: [
           {
             required: (form) => form.method === "3",
@@ -164,6 +173,7 @@ export default {
           },
         ],
       },
+
     };
   },
   methods: {
@@ -171,9 +181,9 @@ export default {
       const reader = new FileReader();
       reader.onload = (e) => {
         this.lostAndFoundForm.lostImage.push({
-          uid: file.uid, // 唯一标识符
-          name: file.name, // 文件名
-          url: e.target.result, // Base64 数据
+          uid: file.uid,
+          name: file.name,
+          url: e.target.result,
         });
       };
       reader.readAsDataURL(file.raw);
@@ -202,10 +212,15 @@ export default {
 
 
     async onSubmit() {
+      // 检查 designatedPlace 是否为空或只包含空白字符
+      const isDesignatedPlaceValid = this.lostAndFoundForm.designatedPlace.trim().length > 0;
+      const islocationValid = this.lostAndFoundForm.location.trim().length > 0;
+
       if (
-          (this.lostAndFoundForm.method === "3" && this.lostAndFoundForm.designatedPlace === "") ||
+          (this.lostAndFoundForm.method === "3" && !isDesignatedPlaceValid) ||
           !this.lostAndFoundForm.lostImage ||
-          this.lostAndFoundForm.method === ""
+          this.lostAndFoundForm.method === "" ||
+          this.lostAndFoundForm.location==="" || !islocationValid
       ) {
         alert("请完善必填项");
         return;
