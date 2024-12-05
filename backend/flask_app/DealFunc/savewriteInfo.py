@@ -29,9 +29,9 @@ class SaveInfo:
         self.description = description
         self.location = location
         self.savetime = savetime
-        if contactmethod == 1:
+        if contactmethod == "1":
             self.contactmethod = "放在发现地点"
-        elif contactmethod == 2:
+        elif contactmethod == "2":
             self.contactmethod = "联系本人"
         else:
             self.contactmethod = "放在指定地点"
