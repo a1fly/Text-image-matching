@@ -53,44 +53,24 @@
                   <span class="text-ellipsis" :title="item.location">{{ item.location }}</span>
                 </el-descriptions-item>
 
-                 <el-descriptions-item>
+                <el-descriptions-item>
                   <template slot="label">
                     <i class="el-icon-time"></i>
                     发现时间
                   </template>
                   <span class="text-ellipsis" :title="item.findtime">
-                    {{ item.findtime[0]}}年
-                    {{ item.findtime[1]}}月
-                    {{ item.findtime[2]}}日
-                    {{ item.findtime[3]}}时
-                    {{ item.findtime[4]}}分
-                    {{ item.findtime[5]}}秒
+                    {{ item.findtime[0] }}年
+                    {{ item.findtime[1] }}月
+                    {{ item.findtime[2] }}日
+                    {{ item.findtime[3] }}时
+                    {{ item.findtime[4] }}分
+                    {{ item.findtime[5] }}秒
                   </span>
                 </el-descriptions-item>
 
               </el-descriptions>
             </div>
           </div>
-
-          <!-- 弹窗展示失物信息 -->
-          <el-dialog
-              :visible.sync="dialogVisible"
-              width="40%"
-              title="失物信息"
-              @close="handleClose"
-          >
-            <div>
-              <el-descriptions size="medium" :column="1" direction="horizontal" border>
-                <el-descriptions-item label="失物描述">
-                  <span>{{ lostItemDescription }}</span>
-                </el-descriptions-item>
-                <el-descriptions-item label="发现地点">
-                  <span>{{ lostItemLocation }}</span>
-                </el-descriptions-item>
-              </el-descriptions>
-              <el-button @click="handleClaim" type="primary">我是失主，查看领取方式</el-button>
-            </div>
-          </el-dialog>
 
 
           <!-- 弹窗展示领取方式 -->
@@ -119,21 +99,17 @@
 
                 <el-descriptions-item label="地点图片（可预览）">
                   <el-image
-                      :src="PlaceimageUrl || require('@/assets/NoPic.jpg')"
-                      :style="{
-                        width: PlaceimageUrl ? '100px' : '300px',
-                        height: PlaceimageUrl ? '100px' : '100px'
-                      }"
+                      :src="imageSrc"
+                      :style="{ width: imageWidth, height: imageHeight }"
                       @click.stop="handleImageClick(PlaceimageUrl)"
                   ></el-image>
                 </el-descriptions-item>
 
 
               </el-descriptions>
-              <el-button id="checkButton" @click="check" type="primary" >确认是我的，点击确认领取</el-button>
+              <el-button id="checkButton" @click="check" type="primary">确认是我的，点击确认领取</el-button>
             </div>
           </el-dialog>
-
 
           <!-- 图片预览弹窗 -->
           <el-dialog
@@ -153,9 +129,11 @@
           <!-- 分页 -->
           <el-pagination
               id="pagechange"
-              :page-size="4"
+              :current-page.sync="currentPage"
+              :page-size="pageSize"
               layout="prev, pager, next, jumper"
-              :total="1000">
+              :total="totalItems"
+              @current-change="handlePageChange">
           </el-pagination>
 
         </el-main>
@@ -167,7 +145,8 @@
 <script>
 import Header from "@/components/Header.vue";
 import Asider from "@/components/Asider.vue";
-const staticimg_path="http://localhost:5000/static/uploads";
+import axios from "axios";
+const backimageURL="http://localhost:5001/static/uploads/";
 
 export default {
   components: {
@@ -188,48 +167,28 @@ export default {
       contactNum: '',
       designatePlace: '',
       PlaceimageUrl: '',
-      findtime:'',
+      findtime: '',
 
+      // 分页组件的数据
+      currentPage: 1, // 当前页码
+      pageSize: 4,    // 每页显示的条目数
+      totalItems: 1000, // 总条目数
 
-      items: [
-        {
-          description: '发现一把雨伞',
-          location: '综合教学楼北2楼209教室的电脑旁边',
-          imageUrl: 'https://fuss10.elemecdn.com/8/27/f01c15bb73e1ef3793e64e6b7bbccjpeg.jpeg',
-          contactmethod: "指定地点",
-          contact: "QQ号",
-          contactNum: "1113833537",
-          designatePlace: "寝室楼下",
-          PlaceimageUrl: "https://th.bing.com/th/id/R.252826008d1a3551fb5cbb1b1418c99a?rik=KEWke5us59waIg&riu=http%3a%2f%2fimg.mp.sohu.com%2fupload%2f20180713%2f1719cdb4f431475593494115864debff_th.jpg&ehk=cVzyJl1s1NHP1LRrF8M938oorDyBF7nx5kqjxTIaj3g%3d&risl=&pid=ImgRaw&r=0",
-          findtime:[2024,11,27,23,37,33]
-        },
-        {
-          description: '一只黑色背包',
-          location: '教学楼三楼电梯口教学楼三楼电梯口',
-          imageUrl: 'https://th.bing.com/th/id/R.252826008d1a3551fb5cbb1b1418c99a?rik=KEWke5us59waIg&riu=http%3a%2f%2fimg.mp.sohu.com%2fupload%2f20180713%2f1719cdb4f431475593494115864debff_th.jpg&ehk=cVzyJl1s1NHP1LRrF8M938oorDyBF7nx5kqjxTIaj3g%3d&risl=&pid=ImgRaw&r=0',
-          contactmethod: "联系本人",
-          contact: "微信号",
-          contactNum: "1sadasd3537",
-          designatePlace: "",
-          PlaceimageUrl: "",
-          findtime:[2022,10,12,16,17,23]
-        },
-      ]
+      items: []
     };
   },
   methods: {
-    // 确认是否领取
-    check(){
-      alert("已领取！！！")
-      this.getimagefromback("2024-11-27-23-37-33-0.png")
-      // this.contactVisible =false;
+    // 分页组件获取到当前页码
+    handlePageChange(newPage) {
+      this.currentPage = newPage;
+      this.fetchLostItems(this.currentPage, this.pageSize);
+      console.log("现在的页数为：", this.currentPage)
     },
-
-
-    // 从后端获取图片
-    getimagefromback(filename)
-    {
-      this.PlaceimageUrl = `${staticimg_path}/${filename}`;
+    // 确认是否领取
+    check() {
+      alert("已领取！！！")
+      console.log(this.PlaceimageUrl)
+      // this.contactVisible =false;
     },
 
     updateStatus(value) {
@@ -242,7 +201,7 @@ export default {
     // 点击事件，展示失物信息
     handleInfoClick(description, location, contactmethod,
                     contact, contactNum,
-                    designatePlace, PlaceimageUrl,findtime) {
+                    designatePlace, PlaceimageUrl, findtime) {
       this.lostItemDescription = description;
       this.lostItemLocation = location;
       this.contactmethod = contactmethod;
@@ -263,28 +222,55 @@ export default {
       });
 
       this.contactVisible = true;
-      this.dialogVisible = false;
+
     },
     contactClose() {
       this.contactVisible = false;
     },
     // 图片点击事件
     handleImageClick(imageUrl) {
-      if (imageUrl === '') {
+      if (imageUrl === '' || this.PlaceimageUrl===backimageURL) {
         return;
       }
+      console.log("点击图片，图片地址为：", imageUrl)
       this.previewImage = imageUrl;
-      this.previewVisible = true; // 显示图片预览对话框
+      this.previewVisible = true;
     },
     // 关闭图片预览对话框
     handlePreviewClose() {
       this.previewVisible = false; // 隐藏图片预览
     },
+
+    // 加载时获取失物数据
+    fetchLostItems(page, pageSize) {
+      axios.post('api/lost_items', {
+        page: page,
+        pageSize: pageSize
+      })
+          .then(response => {
+            this.items = response.data.items;
+          })
+          .catch(error => {
+            console.error('Failed to fetch lost items:', error);
+          });
+    }
   },
   mounted() {
     // 初始化窗口大小监听
     window.addEventListener("resize", this.handleResize);
     this.handleResize(); // 初始化检测当前窗口大小
+    this.fetchLostItems(this.currentPage, this.pageSize);
+  },
+  computed: {
+    imageSrc() {
+      return this.PlaceimageUrl!==backimageURL || this.PlaceimageUrl=== '' ? this.PlaceimageUrl : require('@/assets/NoPic.jpg');
+    },
+    imageWidth() {
+      return this.PlaceimageUrl!==backimageURL || this.PlaceimageUrl=== '' ? '100px' : '300px';
+    },
+    imageHeight() {
+      return this.PlaceimageUrl!==backimageURL || this.PlaceimageUrl=== ''? '100px' : '100px';
+    }
   },
   beforeDestroy() {
     // 移除窗口大小监听器
@@ -294,12 +280,14 @@ export default {
 </script>
 
 <style scoped>
-#checkButton{
+#checkButton {
   background-color: #ff6a00
 }
-#checkButton:hover{
+
+#checkButton:hover {
   background-color: #dfc1ab;
 }
+
 #pagechange {
   margin-top: 5%;
 }
