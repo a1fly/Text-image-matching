@@ -22,7 +22,7 @@
             <i class="el-icon-reading"></i>
             浏览全部
           </el-menu-item>
-          <el-menu-item index="3-2">
+          <el-menu-item index="3-2" @click="handleSidebarClick('search')">
             <i class="el-icon-cpu"></i>
             智能搜查
           </el-menu-item>
@@ -73,6 +73,8 @@ export default {
         this.$router.push('/contact');
       } else if (route === 'exit' ) {
         this.$router.push('/login');
+      } else if (route === 'search' && this.$route.path !== '/search') {
+        this.$router.push('/search')
       }
 
     }
