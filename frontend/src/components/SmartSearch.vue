@@ -3,6 +3,7 @@ import Header from "@/components/Header.vue";
 import Asider from "@/components/Asider.vue";
 import LostItemDisplay from "@/components/LostItemDisplay.vue";
 import axios from "axios";
+import {Loading} from "element-ui";
 
 export default {
   components: {
@@ -14,77 +15,73 @@ export default {
     return {
       UserInupt: "",
       isSidebarCollapsed: true,
-
       // Lostitem的数据
-      items: [{
-        description: '哈哈哈',
-        location: '这是失物1的地点',
-        imageUrl: 'http://localhost:5001/static/uploads/2024-12-02-16-31-05-1.png',
-        contactmethod: '联系本人',
-        contact: '12345678901',
-        contactNum: '12345678901',
-        designatePlace: '这是失物1的指定地点',
-        PlaceimageUrl: "",
-        findtime: [2023, 1, 23, 12, 30, 30]
-      },
-        {
-          description: '哈哈哈',
-          location: '这是失物1的地点',
-          imageUrl: 'http://localhost:5001/static/uploads/2024-12-02-16-31-05-1.png',
-          contactmethod: '联系本人',
-          contact: '12345678901',
-          contactNum: '12345678901',
-          designatePlace: '这是失物1的指定地点',
-          PlaceimageUrl: "",
-          findtime: [2023, 1, 23, 12, 30, 30]
-        }]
+      items: []
 
     };
   },
   methods: {
     showIsSuccess(SuccessText) {
-    this.$message({
-      message: SuccessText,
-      type: 'success',
-      duration: 3000
-    });
-  },
-  showError(ErrorText) {
-    this.$message({
-      message: ErrorText,
-      type: 'error',
-      duration: 3000
-    });
-  },
+      this.$message({
+        message: SuccessText,
+        type: 'success',
+        duration: 3000
+      });
+    },
+    showError(ErrorText) {
+      this.$message({
+        message: ErrorText,
+        type: 'error',
+        duration: 3000
+      });
+    },
     updateStatus(value) {
       this.isSidebarCollapsed = value;
     },
     handleResize() {
       this.isSidebarCollapsed = window.innerWidth <= 768;
     },
+    showQueriedItem()
+    {
+      // 展示查询到的失物条目
+
+
+    },
     submitText() {
-      if(this.UserInupt.trim().length === 0)
-      {
+      if (this.UserInupt.trim().length === 0) {
         this.showError("不要只输入空格哦~");
-        this.UserInupt="";
+        this.UserInupt = "";
         return;
       }
-      axios.post('/api/UserText', {
+      // 启动加载动画
+      const loadingInstance = Loading.service({
+        lock: true,
+        text: '狠狠计算中...',
+        background: 'rgba(0, 0, 0, 0.7)',
+      });
+      axios
+      .post('/api/UserText', {
         text: this.UserInupt
       })
-          .then((response) => {
-            let flag = response.data.issuccess;
-            if (flag) {
-              this.showIsSuccess("上传成功！！！");
-              this.UserInupt="";
-            } else {
-              this.showError("上传失败了，稍后再重试吧！");
-            }
-          })
-          .catch((error) => {
-            console.log(error);
-            this.showError("请求失败，请检查网络连接或稍后重试！");
-          });
+      .then((response) => {
+        let flag = response.data.issuccess;
+        if (flag) {
+          this.showIsSuccess("上传成功！！！");
+          this.UserInupt = "";
+          this.items = response.data.items;
+        } else {
+          this.showError("上传失败了，稍后再重试吧！");
+        }
+      })
+      .catch((error) => {
+        console.log(error);
+        this.showError("请求失败，请检查网络连接或稍后重试！");
+      })
+      .finally(() => {
+        // 关闭加载动画
+        loadingInstance.close();
+        this.showQueriedItem();
+      });
     }
   },
   mounted() {
