@@ -115,7 +115,7 @@ const backimageURL = "http://localhost:5001/static/uploads/";
 export default {
   props: {
     iteminfo: {
-      type: Object,
+      type: Array,
       required: true,
     },
   },
@@ -225,7 +225,7 @@ export default {
   margin-left: auto;
   margin-right: auto;
   width: 60%;
-  margin-top: 10px;
+  margin-top: 20px;
 }
 
 .InfoDisplayframe:hover {
