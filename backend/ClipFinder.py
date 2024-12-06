@@ -62,7 +62,6 @@ class Finder:
         self.image_features=image_features
         self.image_paths=image_paths
 
-        print(image_features)
 
 
 
