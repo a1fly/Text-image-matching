@@ -4,17 +4,68 @@ import requests
 import os
 import base64
 from datetime import datetime
-from SaveFunc.savewriteInfo import SaveInfo
+from DealFunc.savewriteInfo import SaveInfo
+from DealFunc.readinfo import ReadInfo
+from backend.ClipFinder import Finder
+import atexit
 
 
-app = Flask(__name__)
+
+
 
 
 # 配置上传文件夹
 UPLOAD_FOLDER = '../../resource'
-app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+LOSS_PIC_DIR='../../resource/loss_pic'
+PLACE_PIC_DIR='../../resource/place_pic'
+
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
-saveTool=SaveInfo()
+config_path="../config.json"
+
+
+
+lock_file = "./tmp/myapp_init.lock"
+
+# 用于存储对象的全局变量
+saveTool = None
+reader = None
+finder = None
+
+def remove_lock_file():
+    if os.path.exists(lock_file):
+        os.remove(lock_file)
+
+
+def init_database():
+    # 执行初始化逻辑
+    global saveTool, reader, finder
+    if not os.path.exists(lock_file):
+        print('开始初始化...')
+        saveTool = SaveInfo()
+        reader = ReadInfo()
+        finder = Finder(config_path=config_path)
+        finder.encodeImage(pic_path=LOSS_PIC_DIR)
+        print("初始化完成")
+
+        # 创建锁文件以防止重复初始化
+        open(lock_file, 'a').close()
+    # 注册退出处理程序，在应用结束时删除锁文件
+    atexit.register(remove_lock_file)
+
+
+
+init_database()
+
+
+
+
+
+
+app = Flask(__name__)
+app.config['init_database'] = False
+app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+
+
 
 # 登录验证
 @app.route('/api/login', methods=['POST'])
@@ -134,19 +185,64 @@ def save_base64_image(base64_data, filename):
         print("图片保存失败:", e)
         raise
 
+
+@app.route('/api/lost_items',methods=['POST'])
+def get_itemsInfo():
+    jsondata = request.get_json()  # 获取请求体中的 JSON 数据
+    page = int(jsondata.get('page', 1))  # 从 JSON 数据中获取 page 参数，默认值为 1
+    page_size = int(jsondata.get('pageSize', 10))  # 从 JSON 数据中获取 pageSize 参数，默认值为 10
+
+    data=reader.readdata(page,page_size)
+    return jsonify({
+        'items': data,
+    })
+
+
+@app.route("/api/UserText",methods=['POST'])
+def getUserText():
+    global finder
+    data=request.get_json()
+    userinput=data.get('text',None)
+    print("收到的输入为：",userinput)
+
+
+
+    if(finder is None):
+        print("重新初始化finder")
+        finder=Finder(config_path=config_path)
+        finder.encodeImage(pic_path=LOSS_PIC_DIR)
+    pathlist = finder.find(userinput)
+
+    print("图片路径集合为：\n",pathlist)
+    return jsonify({
+        "issuccess": True,
+    })
+
+
+
+
+
+
+
+
 @app.route('/static/uploads/<filename>', methods=['GET'])
-def get_file(filename,kind):
+def get_file(filename):
+
 
     # kind 为0或者1，表示要传递失物图片还是地点图片
 
     print("==================================================")
     print("获取图片的代码被调用了，filename为：", filename)
     print("==================================================")
-    if kind == 0:
-        return send_from_directory('../../resource/loss_pic', filename)
-    if kind == 1:
-        return send_from_directory('../../resource/place_pic', filename)
+    loss_pic_path = os.path.join(LOSS_PIC_DIR, filename)
+    place_pic_path = os.path.join(PLACE_PIC_DIR, filename)
 
+    if os.path.exists(loss_pic_path):
+        return send_from_directory(LOSS_PIC_DIR, filename)
+    elif os.path.exists(place_pic_path):
+        return send_from_directory(PLACE_PIC_DIR, filename)
+    else:
+        print("NO PIC FOUNDED")
 
 
 
