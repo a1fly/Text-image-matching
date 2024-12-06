@@ -224,7 +224,7 @@ export default {
   transition: all 0.3s ease;
   margin-left: auto;
   margin-right: auto;
-  width: 60%;
+  width: 70%;
   margin-top: 20px;
 }
 
