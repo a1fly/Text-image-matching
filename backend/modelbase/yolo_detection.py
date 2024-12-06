@@ -105,7 +105,7 @@ class YoloDetection:
 
                     filtered_boxes = boxes[keep.numpy().astype(int)]
                     batch_boxes.append(filtered_boxes)
-                    print(f"Before NMS: {len(boxes)}, After NMS: {len(filtered_boxes)}")
+
                 else:
                     batch_boxes.append(boxes)
 

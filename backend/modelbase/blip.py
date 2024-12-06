@@ -3,7 +3,7 @@ from transformers import BlipProcessor, BlipForConditionalGeneration
 from PIL import Image
 import os
 import json
-from tools.imageTool import ImageProcessor
+from backend.tools.imageTool import ImageProcessor
 
 class BLIP:
     def __init__(self,

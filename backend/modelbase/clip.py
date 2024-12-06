@@ -6,7 +6,7 @@ from pathlib import Path
 import matplotlib.pyplot as plt
 from tqdm import tqdm
 from typing import List, Tuple
-from tools.imageTool import ImageProcessor
+from backend.tools.imageTool import ImageProcessor
 import json
 import torch.nn.functional as F
 
