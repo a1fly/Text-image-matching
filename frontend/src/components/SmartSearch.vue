@@ -66,11 +66,11 @@ export default {
       .then((response) => {
         let flag = response.data.issuccess;
         if (flag) {
-          this.showIsSuccess("上传成功！！！");
+          this.showIsSuccess("查找成功！！！");
           this.UserInupt = "";
           this.items = response.data.items;
         } else {
-          this.showError("上传失败了，稍后再重试吧！");
+          this.showError("查找失败了，稍后再重试吧！");
         }
       })
       .catch((error) => {
