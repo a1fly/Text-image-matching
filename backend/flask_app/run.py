@@ -8,6 +8,9 @@ from DealFunc.readinfo import ReadInfo
 from backend.ClipFinder import Finder
 import threading
 import atexit
+from openai import OpenAI
+import json
+
 
 # 配置上传文件夹
 UPLOAD_FOLDER = '../../resource'
@@ -20,6 +23,54 @@ os.makedirs(PLACE_PIC_DIR, exist_ok=True)
 
 config_path = "../config.json"
 lock_file = "./tmp/myapp_init.lock"
+
+# 大模型的提示词
+prompt_text="""您是一位专业且礼貌的客户服务代表。您的任务是通过收集尽可能多的丢失物品或情况的详细信息，帮助用户恢复丢失和找到的信息。为了有效地做到这一点，您应该通过提出相关问题来与用户互动，引导他们提供全面的细节。
+
+    具体来说，您可以要求提供以下信息：
+    -丢失的物品类型。
+    -物品的颜色。
+    -任何独特的形状、图案或特征。
+    -可能有助于识别该物品的任何其他相关细节。
+    同时你不要询问关于丢失场合，丢失时间等信息，只需要获取物品信息即可
+    继续询问后续问题，直到您收集到足够的信息或用户表示他们无法提供进一步的详细信息。如果用户提供的信息不完整，请温和地提示他们提供更多细节。
+
+    一旦你收集了大部分必要的信息，将数据总结成一份简洁的报告，格式为“一张 xxxx 的图片”，其中xxxx根据提供的信息描述了丢失的物品。
+
+    每次以JSON格式返回，内容格式为：
+    {
+    “status”：“未完成”，
+    “info”：“”
+    “reply”：你的回复再加上“如果没有其余信息了也可以直接进行查找哦！”
+    }
+
+
+    最后，以JSON格式用中文向我提供汇总的信息，只返回JSON不要返回其他任何信息了：
+    {
+    “status”：“完成”，
+    “info”：“一张xxxxx的图片”，
+    “reply”："谢谢您提供的信息，我会帮助您进行查找！"
+    }
+
+
+    确保你与用户的互动在整个过程中保持礼貌和乐于助人。"""
+# 大模型的api
+llmapikey="sk-9ebc62478cb641e7bdcaea1d9e68f3d1"
+# 大模型的url
+llmurl="https://dashscope.aliyuncs.com/compatible-mode/v1"
+
+client = OpenAI(
+    api_key=llmapikey,
+    base_url=llmurl,
+)
+
+# 全局变量用于存储对话历史
+conversation_history = []
+
+
+
+
+
 
 # 用于存储对象的全局变量和线程锁
 class GlobalObjects:
@@ -158,6 +209,68 @@ def deal_image_name(pathlist):
         plist=p[0].split('/')
         res.append(plist[-1])
     return res
+
+
+def findPIC(CLIPprompt):
+    finder = GlobalObjects.finder
+    pathlist = finder.find(CLIPprompt)
+
+    reader = GlobalObjects.reader
+
+    name = deal_image_name(pathlist)
+
+    data = reader.readGivenNameItem(name)
+
+    print("图片路径集合为：\n", pathlist)
+    return data
+@app.route("/api/LLMText",methods=['POST'])
+def UseLLM():
+    global conversation_history
+    data1 = request.get_json()
+    userinput = data1.get('text', None)
+    print("收到的输入为：", userinput)
+    system_message = {
+        'role': 'system',
+        'content': prompt_text
+    }
+
+    if not conversation_history:
+        conversation_history = [system_message]
+
+    try:
+        # 将用户的输入添加到对话历史中
+        conversation_history.append({'role': 'user', 'content': userinput})
+
+        # 使用完整的对话历史来获取响应
+        completion = client.chat.completions.create(
+            model="qwen-turbo-2024-11-01",
+            messages=conversation_history,
+        )
+
+        assistant_reply = completion.choices[0].message
+        conversation_history.append(assistant_reply)
+        try:
+            reply_dict = json.loads(assistant_reply.content)
+        except json.JSONDecodeError:
+            return jsonify({"isok": False,"llmtext": "json解析错误", "error": True,"items": ""}), 500
+
+        status = reply_dict.get("status")
+        info = reply_dict.get("info")
+        reply = reply_dict.get("reply")
+
+        # 根据状态返回响应
+        if status == "完成":
+            print("最终CLIP的提示词为：", info)
+            conversation_history = []
+            print("助手记忆已清空，可以开始查询下一件物品")
+            searchdata=findPIC(info)
+            return jsonify({"isok": True, "llmtext": info, "error": False,"items": searchdata})
+        else:
+            return jsonify({"isok": False, "llmtext": reply, "error": False,"items": ""})
+
+    except Exception as e:
+        print("发生错误：", str(e))
+        return jsonify({"isok": False, "llmtext": "","error": str(e),"items": ""}), 500
 
 
 @app.route("/api/UserText", methods=['POST'])

@@ -100,11 +100,18 @@ class Finder:
 
 
 if __name__=='__main__':
+    # CLIP 需要调整config.json的模型路径
     f=Finder()
     f.encodeImage(pic_path="../resource/loss_pic")
-    pathlist=f.find("一幅白色手套")
-    print(pathlist)
-
+    while True:
+        text = input("请输入文本：")
+        if text=="exit":
+            break
+        pathlist=f.find(text)
+        for k in range(len(pathlist)):
+            print(f"{k+1}",pathlist[k])
+        print("============================================")
+        print("============================================")
 
 
 

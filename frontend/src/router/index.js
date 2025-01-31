@@ -7,7 +7,7 @@ import userReg from '../components/UserRegister.vue';
 import Mainhome from '../components/Mainhome.vue';
 import WriteInfo from "@/components/writeInfo.vue";
 import ViewInfo from "@/components/View_Info.vue";
-import SmartSearch from "@/components/SmartSearch.vue";
+import SmartSearch from "@/components/SmartSearch2.vue";
 
 const routes = [
     {path: '/login', component: userLogin},

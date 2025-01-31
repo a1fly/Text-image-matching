@@ -229,7 +229,7 @@ if __name__ == '__main__':
 
 
     # 图片文件夹的路径
-    picpath = "../resource/loss_pic"
+    picpath = "../../resource/loss_pic"
     # 获取图片路径
     image_paths = ip.get_all_pic_paths(picpath)
     print(f"找到 {len(image_paths)} 张图片。\n")
@@ -249,10 +249,12 @@ if __name__ == '__main__':
         top_3_images = [image_path for image_path, similarity in sorted_images[:3]]
 
         # 输出前三大的图片路径
-        print(top_3_images)
+        # print(top_3_images)
+        # print("=======================================================================")
+        # print("=======================================================================")
+        # print(sorted_images[:3])
+        for k in range(len(sorted_images)):
+            print(f"{k+1}",sorted_images[k])
         print("=======================================================================")
-        print("=======================================================================")
-    # 展示这些图片
-    # searcher.show_images(top_n_images, top_n_scores)
 
 
